@@ -4,24 +4,27 @@
       h2 {{emptyText}}
     div.mainPage.row(v-else)
       .spendingTable.col-md
-        div.recordContainer(v-for="recordPerDay in records")
-          div.recordDateContainer
-            .recordDateTitle 
-              <!--.dateYear.dateBlock {{getYear(recordPerDay.date)}}-->
-              .dateMonthDay.dateBlock
-                .month {{getMonth(recordPerDay.date)}}
-                .day {{getDay(recordPerDay.date)}}
-            .recordDateSum {{getDaySum(recordPerDay)}}
-          div.recordDataContainer(v-for="record in recordPerDay.record",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
-            div.recordDataItem.recordDataIcon
-              i(v-bind:class="getIconClassName(record)")
-            div.recordDataItem.recordDataName {{record.item}}
-            div.recordDataItem.recordDataNumber {{record.number}}
-            div.recordDataItem.recordDataEdit.hide
-              span
-                i.recordDataEditIcon.far.fa-edit
-              span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
-                i.recordDataEditIcon.far.fa-trash-alt
+        transition-group(:css="false",@leave="leaveAnimation")
+          div.recordContainer(v-for="recordPerDay in records",:key="recordPerDay.date")
+            div.recordDateContainer
+              .recordDateTitle 
+                .dateMonthDay.dateBlock
+                  .month {{getMonth(recordPerDay.date)}}
+                  .day {{getDay(recordPerDay.date)}}
+              .recordDateSum {{getDaySum(recordPerDay)}}
+            transition-group(:css="false",@leave="leaveAnimation")
+              div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
+                .recordDataInnerContainer
+                  div.recordDataItem.recordDataIcon
+                    i(v-bind:class="getIconClassName(record)")
+                  div.recordDataItem.recordDataName {{record.item}}
+                  div.recordDataItem.recordDataNumber {{record.number}}
+                  div.recordDataItem.recordDataEdit.hide
+                    span
+                      i.recordDataEditIcon.far.fa-edit
+                    span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
+                      i.recordDataEditIcon.far.fa-trash-alt
+          
 
       .spendingChart.col-md
         p CHART
@@ -213,18 +216,36 @@
 
         //do deleteing job
         if (parentArray && targetObj) {
-          parentArray.splice(parentArray.indexOf(targetObj), 1);
+
+          //last one element
+          if(parentArray.length != 1){
+            parentArray.splice(parentArray.indexOf(targetObj), 1);
+          }else{
+            this.records.splice(this.records.indexOf(parentObj), 1);
+          }
 
           //need to delete whole day too
-          if (parentArray.length == 0) {
-            this.records.splice(this.records.indexOf(parentObj), 1)
-          }
+          // if (parentArray.length == 0) {
+          //   this.records.splice(this.records.indexOf(parentObj), 1)
+          // }
+          // console.log(this.records);
         }
         //cannot find target, something get wrong
         else {
           console.log("something wrong, cannot find this record in data");
           return
         }
+      },
+      leaveAnimation: function (el, done) {
+        console.log(el);
+        var delay = el.dataset.index * 150
+        setTimeout(function () {
+          Velocity(
+            el,
+            { opacity: 0, height: 0 ,'margin-bottom':0},
+            { complete: done }
+          )
+        }, delay)
       }
     }
   }
@@ -233,7 +254,14 @@
 <style lang="scss" scoped>
   @import "~bootstrap/scss/bootstrap-grid.scss";
   $recordContainerPadding: 1rem;
-
+.list-enter-active, .list-leave-active {
+  transition: all 1s;
+}
+.list-enter, .list-leave-to
+/* .list-leave-active for below version 2.1.8 */ {
+  opacity: 0;
+  transform: translateY(30px);
+}
   .mainPage {
     padding-top: 3rem;
   }
@@ -310,14 +338,19 @@
 
 
   .recordDataContainer {
+    margin-bottom: .2rem;
+    height: 3rem;
+    overflow: hidden;  
+  }
+
+  .recordDataInnerContainer {
     display: flex;
     background: #CAF7E2;
     color: #1F2D3D;
-    margin-bottom: .2rem;
     flex-direction: row;
-    height: 3rem;
     padding: 1rem;
     align-items: center;
+    height: -webkit-fill-available;
   }
 
   .recordDataItem.recordDataIcon {
