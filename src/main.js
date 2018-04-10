@@ -4,6 +4,7 @@ import Vue from 'vue'
 import App from './App'
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.css';
+import Velocity from 'velocity-animate';
 
 Vue.config.productionTip = false
 
