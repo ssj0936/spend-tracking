@@ -5,10 +5,18 @@
     div.mainPage.row(v-else)
       .spendingTable.col-md
         .newRecordContainer
-          .recordTypeContainer
-            .recordTypeButtonContainer(v-for="type in spendingTypeList")
-              i(data-fa-mask="fas fa-circle",:class="type.iconClassname + ' fa-2x'+ ' newRecordIcon'",data-fa-transform="shrink-7 ")
           .recordInputContainer
+            .recordInputNameContainer
+              input.newRecordNameInput()
+            .recordInputCostContainer
+              span.dollarSignIcon $
+              input.newRecordCostInput(type="text")
+          .recordTypeContainer.row
+            .recordTypeRow.col-md(v-for="i in getDisplayRowCount")
+              .recordTypeButtonContainer.fa-2x(v-for="type in getSubArrayBelongToThisItem(i)")
+                span.fa-layers.fa-fw.iconContainer
+                  i.fas.fa-square.newRecordIconBackGround
+                  i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
         transition-group(:css="false",@leave="leaveAnimation")
           div.recordContainer(v-for="recordPerDay in records",:key="recordPerDay.date")
             div.recordDateContainer
@@ -46,12 +54,7 @@
     faTrashAlt,
     faEdit
   } from '@fortawesome/fontawesome-free-regular'
-  fontawesome.library.add(faUtensils)
-  fontawesome.library.add(faCoffee)
-  fontawesome.library.add(faMobileAlt)
-  fontawesome.library.add(faHandHoldingUsd)
-  fontawesome.library.add(faTrashAlt)
-  fontawesome.library.add(faEdit)
+  
 
   var spendingTypeObj = (name, iconname) => {
     return {
@@ -119,13 +122,23 @@
           spendingTypeObj("incoming","fas fa-hand-holding-usd"),
 
         ],
+        itemsPerRow:5,
         isDataEmpty: false,
         emptyText: "還沒有開始記帳喔！",
         dateSpliter: '-'
       }
     },
     created() {},
+    computed:{
+      getDisplayRowCount(){
+        return Math.ceil(this.spendingTypeList.length/this.itemsPerRow);
+      }
+    },
     methods: {
+      getSubArrayBelongToThisItem(index){
+        return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
+      },
+
       getDaySum(dayRecord) {
         var sum = 0;
         for (let r of dayRecord.record) {
@@ -191,14 +204,7 @@
 
           if (this.records.length == 0)
             this.isDataEmpty = true;
-
-          //need to delete whole day too
-          // if (parentArray.length == 0) {
-          //   this.records.splice(this.records.indexOf(parentObj), 1)
-          // }
-          // console.log(this.records);
         }
-        //cannot find target, something get wrong
         else {
           console.log("something wrong, cannot find this record in data");
           return
@@ -229,20 +235,9 @@
   $app-color:#CAF7E2;
   $light-icon-color:#6c757d;
   $text-color:#1F2D3D;
-
-  .list-enter-active,
-  .list-leave-active {
-    transition: all 1s;
-  }
-
-  .list-enter,
-  .list-leave-to
-  /* .list-leave-active for below version 2.1.8 */
-
-    {
-    opacity: 0;
-    transform: translateY(30px);
-  }
+  $recordTypeContainerBGC:#DDD;
+  $vividColor:#F17E29;
+  $lightGray:#6c757d;;
 
   .mainPage {
     padding-top: 3rem;
@@ -375,16 +370,82 @@
 
   .recordTypeButtonContainer{
     display: inline-block;
+    margin: 0 .5rem;
   }
 
   .newRecordContainer{
+    padding: 1rem;
     background: $app-color;
+    margin-bottom: 3rem;
   }
 
-  .newRecordIcon{
-    transition: all .3s;
+  .iconContainer{
+    .newRecordIconBackGround{
+      transition: all .3s;
+    }
+
+    .newRecordIcon{
+      transition: all .3s;
+    }
   }
-  .newRecordIcon:hover{
-    color:$light-icon-color;
+
+  .iconContainer:hover{
+    .newRecordIconBackGround{
+      color:$vividColor;
+      opacity: .7;
+    }
+
+    .newRecordIcon{
+      color:white;
+    }
+  }
+ 
+  .recordTypeRow{
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  input.newRecordCostInput{
+    font-size: xx-large;
+    height:2rem;
+    width:100px;
+    border:0px;
+    background: transparent;
+    border-bottom: 1px solid $lightGray;
+  }
+
+  input.newRecordCostInput:focus { 
+    outline: none !important;
+    // border:1px solid transparent;
+    // border-bottom: 1px solid $lightGray;
+    // box-shadow:none;
+  }
+
+  input[type=number]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+  }
+
+  ::-webkit-input-placeholder{
+    opacity: .4;
+  }
+
+  .recordTypeContainer{
+    padding: .5rem 0;
+    margin-bottom: 2rem;
+    background: $recordTypeContainerBGC;
+    margin: 0 -1rem;
+  }
+
+  .recordInputCostContainer{
+    // margin-left: auto;
+    // margin-right: 0px;
+    width: fit-content;
+    display: flex;
+    align-items: center;
+  }
+
+  span.dollarSignIcon{
+    font-weight: bold;
+    font-size: xx-large;
   }
 </style>
