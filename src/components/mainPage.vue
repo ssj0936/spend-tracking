@@ -1,22 +1,26 @@
 <template lang="pug">
 .container
     div.emptyBlock(v-if="isDataEmpty")
-      h2 {{emptyText}}
+      h2 {{strings.emptyText}}
     div.mainPage.row(v-else)
       .spendingTable.col-md
         .newRecordContainer
           .recordInputContainer
             .recordInputNameContainer
-              input.newRecordNameInput()
+              .recordTypeIconContainer(style="width:35px")
+                i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
+              input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="strings.placeholder_newRecordItemName")
             .recordInputCostContainer
-              span.dollarSignIcon $
-              input.newRecordCostInput(type="text")
+              i.recordInputIcon.fas.fa-dollar-sign.fa-lg
+              input.newRecordCostInput(v-model="newRecord.newRecordPrice",type="text",:placeholder="strings.placeholder_newRecordItemPrice")
           .recordTypeContainer.row
             .recordTypeRow.col-md(v-for="i in getDisplayRowCount")
               .recordTypeButtonContainer.fa-2x(v-for="type in getSubArrayBelongToThisItem(i)")
-                span.fa-layers.fa-fw.iconContainer
+                span.fa-layers.fa-fw.iconContainer(@click="changeCurrentRecordType(type.typename)")
                   i.fas.fa-square.newRecordIconBackGround
                   i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
+          .recordSubmitContainer
+            button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         transition-group(:css="false",@leave="leaveAnimation")
           div.recordContainer(v-for="recordPerDay in records",:key="recordPerDay.date")
             div.recordDateContainer
@@ -56,10 +60,11 @@
   } from '@fortawesome/fontawesome-free-regular'
   
 
-  var spendingTypeObj = (name, iconname) => {
+  var spendingTypeObj = (name, iconname,dataicon) => {
     return {
       typename: name,
-      iconClassname: iconname
+      iconClassname: iconname,
+      dataicon:dataicon
     }
   }
 
@@ -110,31 +115,61 @@
           record: [recordObj(1, "Salary", "incoming", "in", 51000)]
         }],
         spendingTypeList: [
-          spendingTypeObj("eating","fas fa-utensils"),
-          spendingTypeObj("drinking","fas fa-coffee"),
-          spendingTypeObj("3c","fas fa-mobile-alt"),
-          spendingTypeObj("traffic","fas fa-taxi"),
-          spendingTypeObj("entertainment","fas fa-gamepad"),
-          spendingTypeObj("home","fas fa-home"),
-          spendingTypeObj("medical","fas fa-briefcase-medical"),
-          spendingTypeObj("other","fas fa-globe"),
-          spendingTypeObj("living cost","fas fa-clipboard-list"),
-          spendingTypeObj("incoming","fas fa-hand-holding-usd"),
+          spendingTypeObj("eating","fas fa-utensils","utensils"),
+          spendingTypeObj("drinking","fas fa-coffee","coffee"),
+          spendingTypeObj("3c","fas fa-mobile-alt","mobile-alt"),
+          spendingTypeObj("traffic","fas fa-taxi","taxi"),
+          spendingTypeObj("entertainment","fas fa-gamepad","gamepad"),
+          spendingTypeObj("home","fas fa-home","home"),
+          spendingTypeObj("medical","fas fa-briefcase-medical","briefcase-medical"),
+          spendingTypeObj("other","fas fa-globe","globe"),
+          spendingTypeObj("living cost","fas fa-clipboard-list","clipboard-list"),
+          spendingTypeObj("incoming","fas fa-hand-holding-usd","hand-holding-usd"),
 
         ],
         itemsPerRow:5,
         isDataEmpty: false,
-        emptyText: "還沒有開始記帳喔！",
-        dateSpliter: '-'
+        dateSpliter: '-',
+        strings:{
+          emptyText: "還沒有開始記帳喔！",
+          placeholder_newRecordItemName: "Enter what you buy",
+          placeholder_newRecordItemPrice: "Price",
+          text_newRecoedSubmit:"Submit",
+        },
+
+        newRecordType:null,
+        newRecord:{
+          newRecordDate:null,
+          newRecordName:null,
+          newRecordPrice:null,
+          newRecordType:null,
+        },
+      }
+    },
+    watch:{
+      newRecord:{
+        deep: true,
+        handler:function (val, oldVal) {
+          //change input icon programmatically
+          let newIcon = this.spendingTypeList.filter((obj)=>{
+            return obj.typename == this.newRecord.newRecordType;
+          })
+          document.querySelector(".recordTypeIcon").setAttribute("data-icon",newIcon[0].dataicon);
+
+        },
       }
     },
     created() {},
     computed:{
       getDisplayRowCount(){
         return Math.ceil(this.spendingTypeList.length/this.itemsPerRow);
-      }
+      },
     },
     methods: {
+      newrecordSubmit(){
+        console.log(this.newRecord);
+      },
+
       getSubArrayBelongToThisItem(index){
         return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
       },
@@ -171,6 +206,17 @@
       recordDataEditMouseLeave(e) {
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
         targetEditBlock.classList.add("hide");
+      },
+      changeCurrentRecordType(typename){
+        this.newRecord.newRecordType = typename;
+      },
+      getCurrentRecordType(){
+        let currentRecordType = this.newRecord.newRecordType;
+        let find = this.spendingTypeList.filter((obj)=>{
+          return obj.typename == currentRecordType
+        })
+        console.log(find);
+        return (find.length == 0) ? "fas fa-pencil-alt" : find[0].iconClassname;
       },
       deleteRecord(date, recordId) {
         let parentObj = null,
@@ -237,7 +283,8 @@
   $text-color:#1F2D3D;
   $recordTypeContainerBGC:#DDD;
   $vividColor:#F17E29;
-  $lightGray:#6c757d;;
+  $lightGray:#6c757d8a;
+  $button-text-color:rgb(50, 73, 99);
 
   .mainPage {
     padding-top: 3rem;
@@ -405,22 +452,6 @@
     justify-content: center;
   }
 
-  input.newRecordCostInput{
-    font-size: xx-large;
-    height:2rem;
-    width:100px;
-    border:0px;
-    background: transparent;
-    border-bottom: 1px solid $lightGray;
-  }
-
-  input.newRecordCostInput:focus { 
-    outline: none !important;
-    // border:1px solid transparent;
-    // border-bottom: 1px solid $lightGray;
-    // box-shadow:none;
-  }
-
   input[type=number]::-webkit-inner-spin-button {
       -webkit-appearance: none;
   }
@@ -431,21 +462,71 @@
 
   .recordTypeContainer{
     padding: .5rem 0;
-    margin-bottom: 2rem;
+    // margin-bottom: 2rem;
     background: $recordTypeContainerBGC;
-    margin: 0 -1rem;
+    margin-left: -$recordContainerPadding;
+    margin-right: -$recordContainerPadding;
+    // margin-bottom: -$recordContainerPadding;
   }
 
-  .recordInputCostContainer{
-    // margin-left: auto;
-    // margin-right: 0px;
-    width: fit-content;
+  .recordSubmitContainer{
+    margin-top: $recordContainerPadding;
+    display: flex;
+    justify-content: flex-end;
+
+    button{
+      font-size: large;
+      background: transparent;
+      border: 2px solid $button-text-color;
+      color:$button-text-color;
+      transition: all .3s;
+      cursor: pointer;
+
+      &:hover{
+        background: $button-text-color;
+        border: 2px solid $button-text-color;
+        color:white;
+      }
+    }
+  }
+
+  .recordInputContainer{
     display: flex;
     align-items: center;
-  }
+    margin-bottom: .3rem;
 
-  span.dollarSignIcon{
-    font-weight: bold;
-    font-size: xx-large;
+    .recordInputNameContainer{
+      display: flex;
+      align-items: center;
+      flex: 1;
+
+      input{
+        width: auto;
+      }
+    }
+
+    .recordInputCostContainer{
+      width: fit-content;
+      display: flex;
+      align-items: center;
+      flex: 0;
+    }
+
+    input{
+      font-size: large;
+      height:2rem;
+      width:80px;
+      border:0px;
+      background: transparent;
+      // border-bottom: 1px solid $lightGray;
+    }
+
+    input:focus { 
+      outline: none !important;
+    }
+
+    .recordInputIcon{
+      margin-right: 8px;
+    }
   }
 </style>
