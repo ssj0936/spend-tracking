@@ -12,7 +12,7 @@
               input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="strings.placeholder_newRecordItemName")
             .recordInputCostContainer
               i.recordInputIcon.fas.fa-dollar-sign.fa-lg
-              input.newRecordCostInput(v-model="newRecord.newRecordPrice",type="text",:placeholder="strings.placeholder_newRecordItemPrice")
+              input.newRecordCostInput(v-model="newRecord.newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
           .recordTypeContainer.row
             .recordTypeRow.col-md(v-for="i in getDisplayRowCount")
               .recordTypeButtonContainer.fa-2x(v-for="type in getSubArrayBelongToThisItem(i)")
@@ -21,15 +21,15 @@
                   i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
           .recordSubmitContainer
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
-        transition-group(:css="false",@leave="leaveAnimation")
-          div.recordContainer(v-for="recordPerDay in records",:key="recordPerDay.date")
+        transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
+          div.recordContainer(v-for="recordPerDay in getSortedRecords",:key="recordPerDay.date")
             div.recordDateContainer
               .recordDateTitle 
                 .dateMonthDay.dateBlock
                   .month {{getMonth(recordPerDay.date)}}
                   .day {{getDay(recordPerDay.date)}}
               .recordDateSum {{getDaySum(recordPerDay)}}
-            transition-group(:css="false",@leave="leaveAnimation")
+            transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
               div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
                 .recordDataInnerContainer
                   div.recordDataItem.recordDataIcon
@@ -41,8 +41,6 @@
                       i.recordDataEditIcon.far.fa-edit
                     span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
                       i.recordDataEditIcon.far.fa-trash-alt
-          
-
       .spendingChart.col-md
         p CHART
 </template>
@@ -58,22 +56,29 @@
     faTrashAlt,
     faEdit
   } from '@fortawesome/fontawesome-free-regular'
-  
 
-  var spendingTypeObj = (name, iconname,dataicon) => {
+
+  var spendingTypeObj = (name, iconname, dataicon) => {
     return {
       typename: name,
       iconClassname: iconname,
-      dataicon:dataicon
+      dataicon: dataicon
     }
   }
 
-  var recordObj = (id, item, type, spendingType, number) => {
+  var recordObj = (date, record) => {
+    return {
+      date: date,
+      record: record,
+    }
+  }
+
+  var recordObjDay = (id, item, type, number) => {
     return {
       "id": id,
       "item": item,
       "type": type,
-      "spendingType": spendingType,
+      "spendingType": (type == "incoming") ? "in" : "out",
       "number": number
     }
   }
@@ -83,94 +88,137 @@
     name: "mainPage",
     data() {
       return {
-        records: [{
-          date: "2018-03-27",
-          record: [recordObj(1, "Coffee", "drinking", "out", 96)]
-        }, {
-          date: "2018-03-26",
-          record: [recordObj(1, "Breakfast", "eating", "out", 17)]
-        }, {
-          date: "2018-03-25",
-          record: [
-            recordObj(1, "Breakfast", "eating", "out", 150),
-            recordObj(2, "Dinner", "eating", "out", 510),
-            recordObj(3, "Coke", "drinking", "out", 60),
-            recordObj(4, "Rack", "3c", "out", 195)
-          ]
-
-        }, {
-          date: "2018-03-23",
-          record: [recordObj(1, "Lunch", "eating", "out", 169)]
-
-        }, {
-          date: "2018-03-22",
-          record: [recordObj(1, "Lunch", "eating", "out", 169)]
-
-        }, {
-          date: "2018-03-20",
-          record: [recordObj(1, "Lunch", "eating", "out", 169)]
-
-        }, {
-          date: "2018-03-05",
-          record: [recordObj(1, "Salary", "incoming", "in", 51000)]
-        }],
+        records: [
+          recordObj("2018-03-27", [recordObjDay(0, "Coffee", "drinking", 96)]),
+          recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "eating", 17)]),
+          recordObj("2018-03-25", [
+            recordObjDay(0, "Breakfast", "eating", 150),
+            recordObjDay(1, "Dinner", "eating", 510),
+            recordObjDay(2, "Coke", "drinking", 60),
+            recordObjDay(3, "Rack", "3c", 195)
+          ]),
+          recordObj("2018-03-23", [recordObjDay(0, "Lunch", "eating", 169)]),
+          recordObj("2018-03-22", [recordObjDay(0, "Lunch", "eating", 169)]),
+          recordObj("2018-03-20", [recordObjDay(0, "Lunch", "eating", 169)]),
+          recordObj("2018-03-05", [recordObjDay(0, "Salary", "incoming", 51000)])
+        ],
         spendingTypeList: [
-          spendingTypeObj("eating","fas fa-utensils","utensils"),
-          spendingTypeObj("drinking","fas fa-coffee","coffee"),
-          spendingTypeObj("3c","fas fa-mobile-alt","mobile-alt"),
-          spendingTypeObj("traffic","fas fa-taxi","taxi"),
-          spendingTypeObj("entertainment","fas fa-gamepad","gamepad"),
-          spendingTypeObj("home","fas fa-home","home"),
-          spendingTypeObj("medical","fas fa-briefcase-medical","briefcase-medical"),
-          spendingTypeObj("other","fas fa-globe","globe"),
-          spendingTypeObj("living cost","fas fa-clipboard-list","clipboard-list"),
-          spendingTypeObj("incoming","fas fa-hand-holding-usd","hand-holding-usd"),
+          spendingTypeObj("eating", "fas fa-utensils", "utensils"),
+          spendingTypeObj("drinking", "fas fa-coffee", "coffee"),
+          spendingTypeObj("3c", "fas fa-mobile-alt", "mobile-alt"),
+          spendingTypeObj("traffic", "fas fa-taxi", "taxi"),
+          spendingTypeObj("entertainment", "fas fa-gamepad", "gamepad"),
+          spendingTypeObj("home", "fas fa-home", "home"),
+          spendingTypeObj("medical", "fas fa-briefcase-medical", "briefcase-medical"),
+          spendingTypeObj("other", "fas fa-globe", "globe"),
+          spendingTypeObj("living cost", "fas fa-clipboard-list", "clipboard-list"),
+          spendingTypeObj("incoming", "fas fa-hand-holding-usd", "hand-holding-usd"),
 
         ],
-        itemsPerRow:5,
+        itemsPerRow: 5,
         isDataEmpty: false,
         dateSpliter: '-',
-        strings:{
+        strings: {
           emptyText: "還沒有開始記帳喔！",
           placeholder_newRecordItemName: "Enter what you buy",
           placeholder_newRecordItemPrice: "Price",
-          text_newRecoedSubmit:"Submit",
+          text_newRecoedSubmit: "Submit",
         },
 
-        newRecordType:null,
-        newRecord:{
-          newRecordDate:null,
-          newRecordName:null,
-          newRecordPrice:null,
-          newRecordType:null,
+        newRecord: {
+          newRecordDate: null,
+          newRecordName: null,
+          newRecordPrice: null,
+          newRecordType: null,
         },
       }
     },
-    watch:{
-      newRecord:{
-        deep: true,
-        handler:function (val, oldVal) {
+    watch: {
+      getNewRecordType: {
+        handler: function (val, oldVal) {
           //change input icon programmatically
-          let newIcon = this.spendingTypeList.filter((obj)=>{
+          let newIcon = this.spendingTypeList.filter((obj) => {
             return obj.typename == this.newRecord.newRecordType;
           })
-          document.querySelector(".recordTypeIcon").setAttribute("data-icon",newIcon[0].dataicon);
+
+          if(newIcon.length > 0)
+            document.querySelector(".recordTypeIcon").setAttribute("data-icon", newIcon[0].dataicon);
+          else
+            document.querySelector(".recordTypeIcon").setAttribute("data-icon", "pencil-alt");
 
         },
       }
     },
     created() {},
-    computed:{
-      getDisplayRowCount(){
-        return Math.ceil(this.spendingTypeList.length/this.itemsPerRow);
-      },
-    },
-    methods: {
-      newrecordSubmit(){
-        console.log(this.newRecord);
+    computed: {
+      getSortedRecords(){
+        return this.records.sort((a,b)=>{
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        })
       },
 
-      getSubArrayBelongToThisItem(index){
+      getDisplayRowCount() {
+        return Math.ceil(this.spendingTypeList.length / this.itemsPerRow);
+      },
+
+      //used for 'watch'
+      //dont want to watch every property in object
+      getNewRecordType() {
+        return this.newRecord.newRecordType;
+      }
+    },
+    methods: {
+      newrecordSubmit() {
+        //verify
+        if (this.newRecord.newRecordType == null) {
+          alert("you should select a type first");
+          return;
+        }
+
+        if (this.newRecord.newRecordName == null || this.newRecord.newRecordName.length == 0) {
+          alert("you should enter what you buy");
+          return;
+        }
+
+        if (this.newRecord.newRecordPrice == null || isNaN(parseInt(this.newRecord.newRecordPrice)) || parseInt(this.newRecord
+            .newRecordPrice) < 0) {
+          alert("you should enter a number");
+          return;
+        }
+
+        if (this.newRecord.newRecordDate == null) {
+          let date = new Date(),
+            y = date.getFullYear(),
+            m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1),
+            d = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+          this.newRecord.newRecordDate = `${y}-${m}-${d}`;
+        }
+        let newRecordDate = this.newRecord.newRecordDate;
+        // console.log(newRecordDate);
+
+        //insert to records
+        let find = this.records.filter((obj) => {
+          return obj.date == newRecordDate;
+        })
+        if (find.length > 0) {
+          // console.log("existed");
+          let id = find[0].record[find[0].record.length - 1].id + 1 ;
+          find[0].record.push(recordObjDay(id, this.newRecord.newRecordName, this.newRecord.newRecordType, Number(this.newRecord.newRecordPrice)));
+        } else {
+          // console.log("not existed");
+          this.records.push(recordObj(this.newRecord.newRecordDate,[recordObjDay(1, this.newRecord.newRecordName, this.newRecord.newRecordType, Number(this.newRecord.newRecordPrice))]));
+        }
+        // console.log(this.records);
+        this.resetNewRecord();
+      },
+
+      resetNewRecord(){
+        for(let key in this.newRecord){
+          this.newRecord[key] = null;
+        }
+      },
+
+      getSubArrayBelongToThisItem(index) {
         return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
       },
 
@@ -187,7 +235,9 @@
       },
 
       getIconClassName(record) {
-        let find = this.spendingTypeList.filter((obj)=>{return obj.typename == record.type});
+        let find = this.spendingTypeList.filter((obj) => {
+          return obj.typename == record.type
+        });
         return find[0].iconClassname;
       },
       getYear(date) {
@@ -207,12 +257,12 @@
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
         targetEditBlock.classList.add("hide");
       },
-      changeCurrentRecordType(typename){
+      changeCurrentRecordType(typename) {
         this.newRecord.newRecordType = typename;
       },
-      getCurrentRecordType(){
+      getCurrentRecordType() {
         let currentRecordType = this.newRecord.newRecordType;
-        let find = this.spendingTypeList.filter((obj)=>{
+        let find = this.spendingTypeList.filter((obj) => {
           return obj.typename == currentRecordType
         })
         console.log(find);
@@ -250,11 +300,20 @@
 
           if (this.records.length == 0)
             this.isDataEmpty = true;
-        }
-        else {
+        } else {
           console.log("something wrong, cannot find this record in data");
           return
         }
+      },
+      enterAnimation: function (el, done) {
+        var delay = el.dataset.index * 150
+        setTimeout(function () {
+          Velocity(
+            el,
+            { opacity: 1/*, height: '3.6em' */},
+            { complete: done }
+          )
+        }, delay)
       },
       leaveAnimation: function (el, done) {
         console.log(el);
@@ -415,118 +474,120 @@
     color: $light-icon-color;
   }
 
-  .recordTypeButtonContainer{
+  .recordTypeButtonContainer {
     display: inline-block;
     margin: 0 .5rem;
   }
 
-  .newRecordContainer{
+  .newRecordContainer {
     padding: 1rem;
     background: $app-color;
     margin-bottom: 3rem;
   }
 
-  .iconContainer{
-    .newRecordIconBackGround{
+  .iconContainer {
+    .newRecordIconBackGround {
       transition: all .3s;
     }
 
-    .newRecordIcon{
+    .newRecordIcon {
       transition: all .3s;
     }
   }
 
-  .iconContainer:hover{
-    .newRecordIconBackGround{
-      color:$vividColor;
+  .iconContainer:hover {
+    .newRecordIconBackGround {
+      color: $vividColor;
       opacity: .7;
     }
 
-    .newRecordIcon{
-      color:white;
+    .newRecordIcon {
+      color: white;
     }
   }
- 
-  .recordTypeRow{
+
+  .recordTypeRow {
     display: inline-flex;
     justify-content: center;
   }
 
   input[type=number]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
+    -webkit-appearance: none;
   }
 
-  ::-webkit-input-placeholder{
+  ::-webkit-input-placeholder {
     opacity: .4;
   }
 
-  .recordTypeContainer{
-    padding: .5rem 0;
-    // margin-bottom: 2rem;
+  .recordTypeContainer {
+    padding: .5rem 0; // margin-bottom: 2rem;
     background: $recordTypeContainerBGC;
     margin-left: -$recordContainerPadding;
-    margin-right: -$recordContainerPadding;
-    // margin-bottom: -$recordContainerPadding;
+    margin-right: -$recordContainerPadding; // margin-bottom: -$recordContainerPadding;
   }
 
-  .recordSubmitContainer{
+  .recordSubmitContainer {
     margin-top: $recordContainerPadding;
     display: flex;
     justify-content: flex-end;
 
-    button{
+    button {
       font-size: large;
       background: transparent;
       border: 2px solid $button-text-color;
-      color:$button-text-color;
+      color: $button-text-color;
       transition: all .3s;
       cursor: pointer;
 
-      &:hover{
+      &:hover {
         background: $button-text-color;
         border: 2px solid $button-text-color;
-        color:white;
+        color: white;
       }
     }
   }
 
-  .recordInputContainer{
+  .recordInputContainer {
     display: flex;
     align-items: center;
     margin-bottom: .3rem;
 
-    .recordInputNameContainer{
+    .recordInputNameContainer {
       display: flex;
       align-items: center;
       flex: 1;
 
-      input{
+      input {
         width: auto;
+      }
+
+      .recordTypeIconContainer {
+        text-align: center;
       }
     }
 
-    .recordInputCostContainer{
+    .recordInputCostContainer {
       width: fit-content;
       display: flex;
       align-items: center;
       flex: 0;
     }
 
-    input{
+    input {
       font-size: large;
-      height:2rem;
-      width:80px;
-      border:0px;
-      background: transparent;
-      // border-bottom: 1px solid $lightGray;
+      height: 2rem;
+      width: 80px;
+      border: 0px;
+      background: transparent; // border-bottom: 1px solid $lightGray;
     }
 
-    input:focus { 
+    input:focus {
       outline: none !important;
     }
 
-    .recordInputIcon{
+    .recordInputIcon {
       margin-right: 8px;
     }
   }
+
 </style>
