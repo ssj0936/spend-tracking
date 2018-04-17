@@ -16,9 +16,10 @@
           .recordTypeContainer.row
             .recordTypeRow.col-md(v-for="i in getDisplayRowCount")
               .recordTypeButtonContainer.fa-2x(v-for="type in getSubArrayBelongToThisItem(i)")
-                span.fa-layers.fa-fw.iconContainer(@click="changeCurrentRecordType(type.typename)")
+                span.fa-layers.fa-fw.iconContainer(@click="changeCurrentRecordType(type.typename)",@mouseenter="iconEnterAnimation",@mouseleave="iconLeaveAnimation",)
                   i.fas.fa-square.newRecordIconBackGround
                   i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
+                div.iconTag {{type.typename}}
           .recordSubmitContainer
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
@@ -122,7 +123,7 @@
           emptyText: "還沒有開始記帳喔！",
           placeholder_newRecordItemName: "Enter what you buy",
           placeholder_newRecordItemPrice: "Price",
-          text_newRecoedSubmit: "Submit",
+          text_newRecoedSubmit: "Add",
         },
 
         newRecord: {
@@ -305,29 +306,35 @@
           return
         }
       },
+      iconEnterAnimation(e){
+        console.log(e.target);
+      },
+
+      iconLeaveAnimation(e){
+        console.log(e.target);
+      },
+
       enterAnimation: function (el, done) {
         var delay = el.dataset.index * 150
         setTimeout(function () {
           Velocity(
             el,
-            { opacity: 1/*, height: '3.6em' */},
+            "transition.slideDownBigIn",
             { complete: done }
           )
         }, delay)
       },
       leaveAnimation: function (el, done) {
-        console.log(el);
+        console.log($(el).get(0));
         var delay = el.dataset.index * 150
         setTimeout(function () {
-          Velocity(
-            el, {
+          Velocity(el,{
               opacity: 0,
               height: 0,
               'margin-bottom': 0
-            }, {
+            },{
               complete: done
-            }
-          )
+            })
         }, delay)
       }
     }
@@ -475,8 +482,21 @@
   }
 
   .recordTypeButtonContainer {
-    display: inline-block;
+    display: inline-flex;
     margin: 0 .5rem;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    padding-bottom: 0.875em;
+
+    .iconTag{
+      font-size: medium;
+      font-weight: 300;
+      width: max-content;
+      position: absolute;
+      top: 1.75em;
+      opacity: 0;
+    }
   }
 
   .newRecordContainer {

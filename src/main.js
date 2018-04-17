@@ -4,7 +4,18 @@ import Vue from 'vue'
 import App from './App'
 import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.css';
-import Velocity from 'velocity-animate';
+// import Velocity from 'velocity-animate';
+
+// var $ = require('jquery');
+// window.jQuery = window.$ = $;
+
+// import 'jquery';
+// import 'velocity-animate';
+// import 'velocity-animate/velocity.ui';
+
+require('velocity-animate');
+require('velocity-animate/velocity.ui');
+
 
 Vue.config.productionTip = false
 
