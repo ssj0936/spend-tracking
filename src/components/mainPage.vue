@@ -9,17 +9,17 @@
             .recordInputNameContainer
               .recordTypeIconContainer(style="width:35px")
                 i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
-              input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="strings.placeholder_newRecordItemName")
+              input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="getNewRecordPlaceholder()")
             .recordInputCostContainer
               i.recordInputIcon.fas.fa-dollar-sign.fa-lg
               input.newRecordCostInput(v-model="newRecord.newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
-          .recordTypeContainer.row
-            .recordTypeRow.col-md(v-for="i in getDisplayRowCount")
-              .recordTypeButtonContainer.fa-2x(v-for="type in getSubArrayBelongToThisItem(i)")
-                span.fa-layers.fa-fw.iconContainer(@click="changeCurrentRecordType(type.typename)",@mouseenter="iconEnterAnimation",@mouseleave="iconLeaveAnimation",)
+          .recordTypeContainer
+            .recordTypeRow(v-for="i in getDisplayRowCount")
+              .recordTypeButtonContainer.fa-2x(v-for="(type,key,index) in getSubArrayBelongToThisItem(i)",@click="changeCurrentRecordType(type.typename)")
+                span.fa-layers.fa-fw.iconContainer
                   i.fas.fa-square.newRecordIconBackGround
                   i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
-                div.iconTag {{type.typename}}
+                div.iconTag(:data-key="type.typename") {{type.typename}}
           .recordSubmitContainer
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
@@ -59,11 +59,12 @@
   } from '@fortawesome/fontawesome-free-regular'
 
 
-  var spendingTypeObj = (name, iconname, dataicon) => {
+  var spendingTypeObj = (name, iconname, dataicon,bgc) => {
     return {
       typename: name,
       iconClassname: iconname,
-      dataicon: dataicon
+      dataicon: dataicon,
+      bgc:bgc
     }
   }
 
@@ -90,30 +91,30 @@
     data() {
       return {
         records: [
-          recordObj("2018-03-27", [recordObjDay(0, "Coffee", "drinking", 96)]),
-          recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "eating", 17)]),
+          recordObj("2018-03-27", [recordObjDay(0, "Coffee", "Drink", 96)]),
+          recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "Food", 17)]),
           recordObj("2018-03-25", [
-            recordObjDay(0, "Breakfast", "eating", 150),
-            recordObjDay(1, "Dinner", "eating", 510),
-            recordObjDay(2, "Coke", "drinking", 60),
-            recordObjDay(3, "Rack", "3c", 195)
+            recordObjDay(0, "Breakfast", "Food", 150),
+            recordObjDay(1, "Dinner", "Food", 510),
+            recordObjDay(2, "Coke", "Drink", 60),
+            recordObjDay(3, "Rack", "Digital", 195)
           ]),
-          recordObj("2018-03-23", [recordObjDay(0, "Lunch", "eating", 169)]),
-          recordObj("2018-03-22", [recordObjDay(0, "Lunch", "eating", 169)]),
-          recordObj("2018-03-20", [recordObjDay(0, "Lunch", "eating", 169)]),
-          recordObj("2018-03-05", [recordObjDay(0, "Salary", "incoming", 51000)])
+          recordObj("2018-03-23", [recordObjDay(0, "Lunch", "Food", 169)]),
+          recordObj("2018-03-22", [recordObjDay(0, "Lunch", "Food", 169)]),
+          recordObj("2018-03-20", [recordObjDay(0, "Lunch", "Food", 169)]),
+          recordObj("2018-03-05", [recordObjDay(0, "Salary", "Income", 51000)])
         ],
         spendingTypeList: [
-          spendingTypeObj("eating", "fas fa-utensils", "utensils"),
-          spendingTypeObj("drinking", "fas fa-coffee", "coffee"),
-          spendingTypeObj("3c", "fas fa-mobile-alt", "mobile-alt"),
-          spendingTypeObj("traffic", "fas fa-taxi", "taxi"),
-          spendingTypeObj("entertainment", "fas fa-gamepad", "gamepad"),
-          spendingTypeObj("home", "fas fa-home", "home"),
-          spendingTypeObj("medical", "fas fa-briefcase-medical", "briefcase-medical"),
-          spendingTypeObj("other", "fas fa-globe", "globe"),
-          spendingTypeObj("living cost", "fas fa-clipboard-list", "clipboard-list"),
-          spendingTypeObj("incoming", "fas fa-hand-holding-usd", "hand-holding-usd"),
+          this.spendingTypeObj("Food", "fas fa-utensils", "utensils",'#ff9b6a'),
+          this.spendingTypeObj("Drink", "fas fa-coffee", "coffee",'#f1b8e4'),
+          this.spendingTypeObj("Digital", "fas fa-mobile-alt", "mobile-alt",'#d9b8f1'),
+          this.spendingTypeObj("Transport", "fas fa-taxi", "taxi",'#f1ccb8'),
+          this.spendingTypeObj("Entertainment", "fas fa-gamepad", "gamepad",'#f1f1b8'),
+          this.spendingTypeObj("Housing", "fas fa-home", "home",'#b8f1ed'),
+          this.spendingTypeObj("Medical", "fas fa-briefcase-medical", "briefcase-medical",'#b8f1cc'),
+          this.spendingTypeObj("Other", "fas fa-globe", "globe",'#e7dac9'),
+          this.spendingTypeObj("Living Cost", "fas fa-clipboard-list", "clipboard-list",'#b7d28d'),
+          this.spendingTypeObj("Income", "fas fa-hand-holding-usd", "hand-holding-usd",'#dcff93'),
 
         ],
         itemsPerRow: 5,
@@ -152,6 +153,10 @@
     },
     created() {},
     computed: {
+      getTypeColorArr(){
+        return this.bgc;
+      },
+
       getSortedRecords(){
         return this.records.sort((a,b)=>{
           return new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -169,6 +174,15 @@
       }
     },
     methods: {
+      spendingTypeObj(name, iconname, dataicon,bgc){
+        return {
+          typename: name,
+          iconClassname: iconname,
+          dataicon: dataicon,
+          bgc:bgc
+        }
+      },
+
       newrecordSubmit() {
         //verify
         if (this.newRecord.newRecordType == null) {
@@ -221,6 +235,14 @@
 
       getSubArrayBelongToThisItem(index) {
         return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
+      },
+
+      getNewRecordPlaceholder(){
+        if(this.newRecord.newRecordType == null)
+          return this.strings.placeholder_newRecordItemName;
+        else{
+          return this.newRecord.newRecordType;
+        }
       },
 
       getDaySum(dayRecord) {
@@ -306,12 +328,13 @@
           return
         }
       },
-      iconEnterAnimation(e){
-        console.log(e.target);
+      iconEnterAnimation(key){
+        Velocity($(`.iconTag[data-key='${key}']`),{opacity:1},150)
+        // console.log(e.target);
       },
 
-      iconLeaveAnimation(e){
-        console.log(e.target);
+      iconLeaveAnimation(key){
+        Velocity($(`.iconTag[data-key='${key}']`),{opacity:0},0)
       },
 
       enterAnimation: function (el, done) {
@@ -347,10 +370,21 @@
   $app-color:#CAF7E2;
   $light-icon-color:#6c757d;
   $text-color:#1F2D3D;
-  $recordTypeContainerBGC:#DDD;
+  $recordTypeContainerBGC:#EEE;
   $vividColor:#F17E29;
   $lightGray:#6c757d8a;
   $button-text-color:rgb(50, 73, 99);
+
+  $c1:#ff9b6a;
+  $c2:#f1b8e4;
+  $c3:#d9b8f1;
+  $c4:#f1ccb8;
+  $c5:#f1f1b8;
+  $c6:#b8f1ed;
+  $c7:#b8f1cc;
+  $c8:#e7dac9;
+  $c9:#b7d28d;
+  $c10:#dcff93;
 
   .mainPage {
     padding-top: 3rem;
@@ -482,20 +516,48 @@
   }
 
   .recordTypeButtonContainer {
-    display: inline-flex;
-    margin: 0 .5rem;
-    flex-direction: column;
+    width: 100%;
+    margin: .3rem .5rem;
+    display: flex;
+    flex-direction: row;
     align-items: center;
     position: relative;
-    padding-bottom: 0.875em;
+    // padding-bottom: 0.875em;
+    // width: 4rem;
+
+    &:hover{
+      cursor: pointer;
+      color:$vividColor;
+
+      .iconContainer{
+        .newRecordIconBackGround {
+          color: $vividColor;
+          opacity: .7;
+        }
+        .newRecordIcon {
+          color: white;
+        }
+      }
+    }
+
+    // .iconContainer:hover {
+    //   .newRecordIconBackGround {
+    //     color: $vividColor;
+    //     opacity: .7;
+    //   }
+
+    //   .newRecordIcon {
+    //     color: white;
+    //   }
+    // }
 
     .iconTag{
       font-size: medium;
       font-weight: 300;
       width: max-content;
-      position: absolute;
-      top: 1.75em;
-      opacity: 0;
+      // position: absolute;
+      // top: 1.75em;
+      // opacity: 0;
     }
   }
 
@@ -506,6 +568,8 @@
   }
 
   .iconContainer {
+    cursor: pointer;
+
     .newRecordIconBackGround {
       transition: all .3s;
     }
@@ -515,20 +579,14 @@
     }
   }
 
-  .iconContainer:hover {
-    .newRecordIconBackGround {
-      color: $vividColor;
-      opacity: .7;
-    }
-
-    .newRecordIcon {
-      color: white;
-    }
-  }
+  
 
   .recordTypeRow {
     display: inline-flex;
-    justify-content: center;
+    flex-direction: column;
+    flex:1;
+    // justify-content: center;
+    align-items: flex-start;
   }
 
   input[type=number]::-webkit-inner-spin-button {
@@ -540,7 +598,9 @@
   }
 
   .recordTypeContainer {
-    padding: .5rem 0; // margin-bottom: 2rem;
+    display: flex;
+    justify-content: center;
+    padding: .5rem; // margin-bottom: 2rem;
     background: $recordTypeContainerBGC;
     margin-left: -$recordContainerPadding;
     margin-right: -$recordContainerPadding; // margin-bottom: -$recordContainerPadding;
