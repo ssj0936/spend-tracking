@@ -5,6 +5,8 @@
     div.mainPage.row(v-else)
       .spendingTable.col-md
         .newRecordContainer
+          .recordInputDatePickerContainter
+            datepicker(value="2018-11-11",id="datepicker",v-model="newRecord.newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
           .recordInputContainer
             .recordInputNameContainer
               .recordTypeIconContainer(style="width:35px")
@@ -46,6 +48,8 @@
         p CHART
 </template>
 <script>
+  import Datepicker from 'vuejs-datepicker';
+
   import fontawesome from '@fortawesome/fontawesome'
   import {
     faUtensils,
@@ -88,6 +92,9 @@
   // https://coolors.co/474747-f17e29-ffffff-58b09c-caf7e2
   export default {
     name: "mainPage",
+    components:{
+        Datepicker,
+    },
     data() {
       return {
         records: [
@@ -124,6 +131,7 @@
           emptyText: "還沒有開始記帳喔！",
           placeholder_newRecordItemName: "Enter what you buy",
           placeholder_newRecordItemPrice: "Price",
+          placeholder_newRecordDate: "select date",
           text_newRecoedSubmit: "Add",
         },
 
@@ -171,6 +179,10 @@
       //dont want to watch every property in object
       getNewRecordType() {
         return this.newRecord.newRecordType;
+      },
+
+      getToday(){
+        return new Date();
       }
     },
     methods: {
@@ -201,13 +213,11 @@
           return;
         }
 
-        if (this.newRecord.newRecordDate == null) {
-          let date = new Date(),
-            y = date.getFullYear(),
-            m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1),
-            d = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-          this.newRecord.newRecordDate = `${y}-${m}-${d}`;
-        }
+        let date = (this.newRecord.newRecordDate == null) ? new Date() : new Date(this.newRecord.newRecordDate),
+          y = date.getFullYear(),
+          m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1),
+          d = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
+        this.newRecord.newRecordDate = `${y}-${m}-${d}`;
         let newRecordDate = this.newRecord.newRecordDate;
         // console.log(newRecordDate);
 
@@ -359,11 +369,31 @@
               complete: done
             })
         }, delay)
+      },
+      customFormatter(date) {
+        return moment(date).format('MMMM Do YYYY, h:mm:ss a');
       }
     }
   }
 
 </script>
+<style lang="scss">
+  input#datepicker{
+    opacity: .4;
+    font-size: large;
+    height: 2rem;
+    width: 80px;
+    border: 0px;
+    background: transparent;
+    outline: none !important;
+
+      // padding: .75em .5em;
+      // font-size: 100%;
+      // border: 1px solid #ccc;
+      // width: 100%
+  }
+</style>
+
 <style lang="scss" scoped>
   @import "~bootstrap/scss/bootstrap-grid.scss";
   $recordContainerPadding: 1rem;
@@ -669,5 +699,4 @@
       margin-right: 8px;
     }
   }
-
 </style>
