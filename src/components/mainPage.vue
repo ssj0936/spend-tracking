@@ -28,17 +28,18 @@
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         .recordsContainer
           .recordsTimeSwitchContainer.fa-2x
-            div.switchBtnContainer
+            .switchBtnContainer(@click="recordSwitchMonth('minus')")
               i.fas.fa-angle-left
-            div.switchBtnContainer
+            .recordsTimeSwitchShowText {{this.currentRecordDate.year+"-"+this.currentRecordDate.month}}
+            .switchBtnContainer(@click="recordSwitchMonth('add')")
               i.fas.fa-angle-right
-          transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
+          transition-group(:css="false",@leave="leaveWholeAnimation",@enter="enterWholeAnimation")
             div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
               div.recordDateContainer
                 .recordDateTitle 
                   .dateMonthDay.dateBlock
-                    .month {{getMonth(recordPerDay.date)}}
-                    .day {{getDay(recordPerDay.date)}}
+                    .month {{getDateMonth(recordPerDay.date)}}
+                    .day {{getDateDay(recordPerDay.date)}}
                 .recordDateSum {{getDaySum(recordPerDay)}}
               transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
                 div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
@@ -145,9 +146,9 @@
         },
 
         newRecord: this.getNewRecord(),
-        defaultDate:{
-          year:"2018",
-          month:"03",
+        currentRecordDate:{
+          year:new Date().getFullYear(),
+          month:new Date().getMonth()+1,
         }
       }
     },
@@ -193,9 +194,19 @@
         return new Date();
       },
 
+      getYear(){
+        console.log(new Date().getFullYear())
+        return new Date().getFullYear();
+      },
+
+      getMonth(){
+        console.log(new Date().getMonth()+1)
+        return new Date().getMonth()+1;
+      },
+
       getRecordsInPeriod(){
-        let currentY = this.defaultDate.year,
-            currentM = this.defaultDate.month;
+        let currentY = this.currentRecordDate.year,
+            currentM = this.currentRecordDate.month;
 
         let tmp = this.records.filter((obj)=>{
           let date = obj.date.split('-'),
@@ -307,13 +318,13 @@
         });
         return find[0].iconClassname;
       },
-      getYear(date) {
-        return date.split(this.dateSpliter)[0];
-      },
-      getMonth(date) {
+      // getYear(date) {
+      //   return date.split(this.dateSpliter)[0];
+      // },
+      getDateMonth(date) {
         return date.split(this.dateSpliter)[1];
       },
-      getDay(date) {
+      getDateDay(date) {
         return date.split(this.dateSpliter)[2];
       },
       recordDataEditMouseEnter(e) {
@@ -392,7 +403,6 @@
         }, delay)
       },
       leaveAnimation: function (el, done) {
-        console.log($(el).get(0));
         var delay = el.dataset.index * 150
         setTimeout(function () {
           Velocity(el,{
@@ -404,8 +414,39 @@
             })
         }, delay)
       },
+
+      enterWholeAnimation: function (el, done) {
+        Velocity(
+            el,
+            "transition.slideDownIn",
+            { complete: done }
+          )
+      },
+      leaveWholeAnimation: function (el, done) {
+        Velocity(
+            el,
+            "transition.slideDownOut",
+            {complete: done }
+          )
+      },
       customFormatter(date) {
         return moment(date).format('MMMM Do YYYY, h:mm:ss a');
+      },
+      recordSwitchMonth(type){
+        
+        let dateStr = `${this.currentRecordDate.year}-${this.currentRecordDate.month}-1`,
+            date = new Date(dateStr);
+
+        if(type == "minus"){
+          date.setMonth(date.getMonth()-1);
+          this.currentRecordDate.year = date.getFullYear();
+          this.currentRecordDate.month = date.getMonth()+1;
+        }else if(type == "add"){
+          date.setMonth(date.getMonth()+1);
+          this.currentRecordDate.year = date.getFullYear();
+          this.currentRecordDate.month = date.getMonth()+1;
+        }
+        console.log(this.currentRecordDate);
       }
     }
   }
@@ -651,6 +692,7 @@
     flex:1;
     // justify-content: center;
     align-items: flex-start;
+    max-width: 200px;
   }
 
   input[type=number]::-webkit-inner-spin-button {
@@ -753,6 +795,9 @@
   }
 
   .recordsTimeSwitchContainer{
+    display:flex;
+    align-items: center;
+    justify-content: center;
     text-align:center;
 
     .switchBtnContainer {
@@ -765,6 +810,12 @@
       &:hover{
         opacity: .5;
       }
+    }
+
+    .recordsTimeSwitchShowText{
+      display: inline-block;
+      text-align:center;
+      font-size:large;
     }
   }
 </style>
