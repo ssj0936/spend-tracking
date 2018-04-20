@@ -6,10 +6,12 @@
       .spendingTable.col-md
         .newRecordContainer
           .recordInputDatePickerContainter
-            datepicker(value="2018-11-11",id="datepicker",v-model="newRecord.newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
+            .recordDateIconContainer
+              i.recordInputIcon.fa-lg.fas.fa-calendar-alt
+            datepicker(id="datepicker",v-model="newRecord.newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
           .recordInputContainer
             .recordInputNameContainer
-              .recordTypeIconContainer(style="width:35px")
+              .recordTypeIconContainer
                 i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
               input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="getNewRecordPlaceholder()")
             .recordInputCostContainer
@@ -24,28 +26,34 @@
                 div.iconTag(:data-key="type.typename") {{type.typename}}
           .recordSubmitContainer
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
-        transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
-          div.recordContainer(v-for="recordPerDay in getSortedRecords",:key="recordPerDay.date")
-            div.recordDateContainer
-              .recordDateTitle 
-                .dateMonthDay.dateBlock
-                  .month {{getMonth(recordPerDay.date)}}
-                  .day {{getDay(recordPerDay.date)}}
-              .recordDateSum {{getDaySum(recordPerDay)}}
-            transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
-              div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
-                .recordDataInnerContainer
-                  div.recordDataItem.recordDataIcon
-                    i(v-bind:class="getIconClassName(record)")
-                  div.recordDataItem.recordDataName {{record.item}}
-                  div.recordDataItem.recordDataNumber {{record.number}}
-                  div.recordDataItem.recordDataEdit.hide
-                    span
-                      i.recordDataEditIcon.far.fa-edit
-                    span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
-                      i.recordDataEditIcon.far.fa-trash-alt
-      .spendingChart.col-md
-        p CHART
+        .recordsContainer
+          .recordsTimeSwitchContainer.fa-2x
+            div.switchBtnContainer
+              i.fas.fa-angle-left
+            div.switchBtnContainer
+              i.fas.fa-angle-right
+          transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
+            div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
+              div.recordDateContainer
+                .recordDateTitle 
+                  .dateMonthDay.dateBlock
+                    .month {{getMonth(recordPerDay.date)}}
+                    .day {{getDay(recordPerDay.date)}}
+                .recordDateSum {{getDaySum(recordPerDay)}}
+              transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
+                div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
+                  .recordDataInnerContainer
+                    div.recordDataItem.recordDataIcon
+                      i(v-bind:class="getIconClassName(record)")
+                    div.recordDataItem.recordDataName {{record.item}}
+                    div.recordDataItem.recordDataNumber {{record.number}}
+                    div.recordDataItem.recordDataEdit.hide
+                      span
+                        i.recordDataEditIcon.far.fa-edit
+                      span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
+                        i.recordDataEditIcon.far.fa-trash-alt
+      <!--.spendingChart.col-md-->
+        <!--p CHART-->
 </template>
 <script>
   import Datepicker from 'vuejs-datepicker';
@@ -98,6 +106,7 @@
     data() {
       return {
         records: [
+          recordObj("2018-04-20", [recordObjDay(0, "McDonald", "Food", 140)]),
           recordObj("2018-03-27", [recordObjDay(0, "Coffee", "Drink", 96)]),
           recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "Food", 17)]),
           recordObj("2018-03-25", [
@@ -131,16 +140,15 @@
           emptyText: "還沒有開始記帳喔！",
           placeholder_newRecordItemName: "Enter what you buy",
           placeholder_newRecordItemPrice: "Price",
-          placeholder_newRecordDate: "select date",
+          placeholder_newRecordDate: "Select Date",
           text_newRecoedSubmit: "Add",
         },
 
-        newRecord: {
-          newRecordDate: null,
-          newRecordName: null,
-          newRecordPrice: null,
-          newRecordType: null,
-        },
+        newRecord: this.getNewRecord(),
+        defaultDate:{
+          year:"2018",
+          month:"03",
+        }
       }
     },
     watch: {
@@ -183,9 +191,34 @@
 
       getToday(){
         return new Date();
+      },
+
+      getRecordsInPeriod(){
+        let currentY = this.defaultDate.year,
+            currentM = this.defaultDate.month;
+
+        let tmp = this.records.filter((obj)=>{
+          let date = obj.date.split('-'),
+              year = date[0],
+              month = date[1];
+          return (currentY == year) && (currentM == month);
+        }).sort((a,b)=>{
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        });
+
+        return tmp;
       }
     },
     methods: {
+      getNewRecord(){
+        return {
+          newRecordDate: new Date(),
+          newRecordName: null,
+          newRecordPrice: null,
+          newRecordType: null,
+        }
+      },
+
       spendingTypeObj(name, iconname, dataicon,bgc){
         return {
           typename: name,
@@ -239,6 +272,7 @@
 
       resetNewRecord(){
         for(let key in this.newRecord){
+          if(key == "newRecordDate") continue;
           this.newRecord[key] = null;
         }
       },
@@ -382,7 +416,7 @@
     opacity: .4;
     font-size: large;
     height: 2rem;
-    width: 80px;
+    // width: 80px;
     border: 0px;
     background: transparent;
     outline: none !important;
@@ -657,6 +691,23 @@
     }
   }
 
+  .recordInputDatePickerContainter{
+    display: flex;
+    align-items: center;
+    flex: 1;
+    margin-bottom: .3rem;
+
+    .recordDateIconContainer {
+      text-align: center;
+      width:35px;
+    }
+
+    .recordInputIcon {
+      margin-right: 8px;
+    }
+  }
+
+
   .recordInputContainer {
     display: flex;
     align-items: center;
@@ -673,6 +724,7 @@
 
       .recordTypeIconContainer {
         text-align: center;
+        width:35px;
       }
     }
 
@@ -697,6 +749,22 @@
 
     .recordInputIcon {
       margin-right: 8px;
+    }
+  }
+
+  .recordsTimeSwitchContainer{
+    text-align:center;
+
+    .switchBtnContainer {
+      cursor: pointer;
+      width:40px;
+      text-align:center;
+      display: inline-block;
+      transition:all .3s;
+
+      &:hover{
+        opacity: .5;
+      }
     }
   }
 </style>
