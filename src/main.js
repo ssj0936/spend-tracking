@@ -16,12 +16,14 @@ window.jQuery = window.$ = $;
 require('velocity-animate');
 require('velocity-animate/velocity.ui');
 
+import store from './store';
 
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
 new Vue({
   el: '#app',
+  store,
   components: { App },
   template: '<App/>'
 })

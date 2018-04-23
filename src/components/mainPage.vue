@@ -28,10 +28,10 @@
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         .recordsContainer
           .recordsTimeSwitchContainer.fa-2x
-            .switchBtnContainer(@click="recordSwitchMonth('minus')")
+            .switchBtnContainer(@click="actionCurrentDisplayMonthIncrease")
               i.fas.fa-angle-left
             .recordsTimeSwitchShowText {{this.currentRecordDate.year+"-"+this.currentRecordDate.month}}
-            .switchBtnContainer(@click="recordSwitchMonth('add')")
+            .switchBtnContainer(@click="actionCurrentDisplayMonthDecrease")
               i.fas.fa-angle-right
           transition-group(:css="false",@leave="leaveWholeAnimation",@enter="enterWholeAnimation")
             div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
@@ -60,17 +60,10 @@
   import Datepicker from 'vuejs-datepicker';
 
   import fontawesome from '@fortawesome/fontawesome'
-  import {
-    faUtensils,
-    faCoffee,
-    faMobileAlt,
-    faHandHoldingUsd
-  } from '@fortawesome/fontawesome-free-solid'
-  import {
-    faTrashAlt,
-    faEdit
-  } from '@fortawesome/fontawesome-free-regular'
+  import '@fortawesome/fontawesome-free-solid'
+  import '@fortawesome/fontawesome-free-regular'
 
+  import { mapGetters, mapActions } from 'vuex'
 
   var spendingTypeObj = (name, iconname, dataicon,bgc) => {
     return {
@@ -170,6 +163,10 @@
     },
     created() {},
     computed: {
+      test(){
+        return this.$store.state.counter;
+      },
+
       getTypeColorArr(){
         return this.bgc;
       },
@@ -221,6 +218,12 @@
       }
     },
     methods: {
+      ...mapActions([
+        'actionCurrentDisplayMonthIncrease',
+        'actionCurrentDisplayMonthDecrease',
+      ]),
+
+
       getNewRecord(){
         return {
           newRecordDate: new Date(),
