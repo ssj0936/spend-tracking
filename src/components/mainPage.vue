@@ -27,12 +27,7 @@
           .recordSubmitContainer
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         .recordsContainer
-          .recordsTimeSwitchContainer.fa-2x
-            .switchBtnContainer(@click="actionCurrentDisplayMonthIncrease")
-              i.fas.fa-angle-left
-            .recordsTimeSwitchShowText {{this.currentRecordDate.year+"-"+this.currentRecordDate.month}}
-            .switchBtnContainer(@click="actionCurrentDisplayMonthDecrease")
-              i.fas.fa-angle-right
+          recordMonthSwitcher
           transition-group(:css="false",@leave="leaveWholeAnimation",@enter="enterWholeAnimation")
             div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
               div.recordDateContainer
@@ -64,6 +59,7 @@
   import '@fortawesome/fontawesome-free-regular'
 
   import { mapGetters, mapActions } from 'vuex'
+  import recordMonthSwitcher from './RecordMonthSwitcher'
 
   var spendingTypeObj = (name, iconname, dataicon,bgc) => {
     return {
@@ -95,7 +91,7 @@
   export default {
     name: "mainPage",
     components:{
-        Datepicker,
+        Datepicker,recordMonthSwitcher
     },
     data() {
       return {
@@ -139,10 +135,6 @@
         },
 
         newRecord: this.getNewRecord(),
-        currentRecordDate:{
-          year:new Date().getFullYear(),
-          month:new Date().getMonth()+1,
-        }
       }
     },
     watch: {
@@ -163,8 +155,16 @@
     },
     created() {},
     computed: {
-      test(){
-        return this.$store.state.counter;
+      ...mapGetters([
+          'getCurrentDisplayYear',
+          'getCurrentDisplayMonth'
+      ]),
+
+      currentRecordDate(){
+        return{
+          year:this.getCurrentDisplayYear,
+          month:this.getCurrentDisplayMonth,
+        }
       },
 
       getTypeColorArr(){
@@ -349,6 +349,7 @@
         console.log(find);
         return (find.length == 0) ? "fas fa-pencil-alt" : find[0].iconClassname;
       },
+
       deleteRecord(date, recordId) {
         let parentObj = null,
           parentArray = null,
@@ -388,7 +389,6 @@
       },
       iconEnterAnimation(key){
         Velocity($(`.iconTag[data-key='${key}']`),{opacity:1},150)
-        // console.log(e.target);
       },
 
       iconLeaveAnimation(key){
@@ -424,25 +424,6 @@
       leaveWholeAnimation: function (el, done) {
         $(el).velocity("stop").velocity({opacity:0},{ duration:0,complete: done });
       },
-      customFormatter(date) {
-        return moment(date).format('MMMM Do YYYY, h:mm:ss a');
-      },
-      recordSwitchMonth(type){
-        
-        let dateStr = `${this.currentRecordDate.year}-${this.currentRecordDate.month}-1`,
-            date = new Date(dateStr);
-
-        if(type == "minus"){
-          date.setMonth(date.getMonth()-1);
-          this.currentRecordDate.year = date.getFullYear();
-          this.currentRecordDate.month = date.getMonth()+1;
-        }else if(type == "add"){
-          date.setMonth(date.getMonth()+1);
-          this.currentRecordDate.year = date.getFullYear();
-          this.currentRecordDate.month = date.getMonth()+1;
-        }
-        // console.log(this.currentRecordDate);
-      }
     }
   }
 
@@ -474,17 +455,6 @@
   $vividColor:#F17E29;
   $lightGray:#6c757d8a;
   $button-text-color:rgb(50, 73, 99);
-
-  $c1:#ff9b6a;
-  $c2:#f1b8e4;
-  $c3:#d9b8f1;
-  $c4:#f1ccb8;
-  $c5:#f1f1b8;
-  $c6:#b8f1ed;
-  $c7:#b8f1cc;
-  $c8:#e7dac9;
-  $c9:#b7d28d;
-  $c10:#dcff93;
 
   .mainPage {
     padding-top: 3rem;
@@ -622,8 +592,6 @@
     flex-direction: row;
     align-items: center;
     position: relative;
-    // padding-bottom: 0.875em;
-    // width: 4rem;
 
     &:hover{
       cursor: pointer;
@@ -640,24 +608,10 @@
       }
     }
 
-    // .iconContainer:hover {
-    //   .newRecordIconBackGround {
-    //     color: $vividColor;
-    //     opacity: .7;
-    //   }
-
-    //   .newRecordIcon {
-    //     color: white;
-    //   }
-    // }
-
     .iconTag{
       font-size: medium;
       font-weight: 300;
       width: max-content;
-      // position: absolute;
-      // top: 1.75em;
-      // opacity: 0;
     }
   }
 
@@ -678,8 +632,6 @@
       transition: all .3s;
     }
   }
-
-  
 
   .recordTypeRow {
     display: inline-flex;
@@ -777,7 +729,7 @@
       height: 2rem;
       width: 80px;
       border: 0px;
-      background: transparent; // border-bottom: 1px solid $lightGray;
+      background: transparent;
     }
 
     input:focus {
@@ -786,31 +738,6 @@
 
     .recordInputIcon {
       margin-right: 8px;
-    }
-  }
-
-  .recordsTimeSwitchContainer{
-    display:flex;
-    align-items: center;
-    justify-content: center;
-    text-align:center;
-
-    .switchBtnContainer {
-      cursor: pointer;
-      width:40px;
-      text-align:center;
-      display: inline-block;
-      transition:all .3s;
-
-      &:hover{
-        opacity: .5;
-      }
-    }
-
-    .recordsTimeSwitchShowText{
-      display: inline-block;
-      text-align:center;
-      font-size:large;
     }
   }
 </style>
