@@ -416,18 +416,10 @@
       },
 
       enterWholeAnimation: function (el, done) {
-        Velocity(
-            el,
-            "transition.slideDownIn",
-            { complete: done }
-          )
+        $(el).velocity("stop").velocity("transition.slideDownIn",{ complete: done });
       },
       leaveWholeAnimation: function (el, done) {
-        Velocity(
-            el,
-            "transition.slideDownOut",
-            {complete: done }
-          )
+        $(el).velocity("stop").velocity({opacity:0},{ duration:0,complete: done });
       },
       customFormatter(date) {
         return moment(date).format('MMMM Do YYYY, h:mm:ss a');
@@ -446,7 +438,7 @@
           this.currentRecordDate.year = date.getFullYear();
           this.currentRecordDate.month = date.getMonth()+1;
         }
-        console.log(this.currentRecordDate);
+        // console.log(this.currentRecordDate);
       }
     }
   }

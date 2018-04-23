@@ -6,8 +6,8 @@ import 'bootstrap';
 import 'bootstrap/dist/css/bootstrap.css';
 // import Velocity from 'velocity-animate';
 
-// var $ = require('jquery');
-// window.jQuery = window.$ = $;
+var $ = require('jquery');
+window.jQuery = window.$ = $;
 
 // import 'jquery';
 // import 'velocity-animate';
