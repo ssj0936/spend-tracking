@@ -8,15 +8,15 @@
           .recordInputDatePickerContainter
             .recordDateIconContainer
               i.recordInputIcon.fa-lg.fas.fa-calendar-alt
-            datepicker(id="datepicker",v-model="newRecord.newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
+            datepicker(id="datepicker",v-model="newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
           .recordInputContainer
             .recordInputNameContainer
               .recordTypeIconContainer
                 i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
-              input.newRecordNameInput(v-model="newRecord.newRecordName",:placeholder="getNewRecordPlaceholder()")
+              input.newRecordNameInput(v-model="newRecordName",:placeholder="getNewRecordPlaceholder")
             .recordInputCostContainer
               i.recordInputIcon.fas.fa-dollar-sign.fa-lg
-              input.newRecordCostInput(v-model="newRecord.newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
+              input.newRecordCostInput(v-model="newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
           .recordTypeContainer
             .recordTypeRow(v-for="i in getDisplayRowCount")
               .recordTypeButtonContainer.fa-2x(v-for="(type,key,index) in getSubArrayBelongToThisItem(i)",@click="changeCurrentRecordType(type.typename)")
@@ -46,7 +46,7 @@
                     div.recordDataItem.recordDataEdit.hide
                       span
                         i.recordDataEditIcon.far.fa-edit
-                      span(v-on:click="deleteRecord(recordPerDay.date,record.id)")
+                      span(v-on:click="deleteRecord({date:recordPerDay.date,id:record.id})")
                         i.recordDataEditIcon.far.fa-trash-alt
       <!--.spendingChart.col-md-->
         <!--p CHART-->
@@ -60,32 +60,8 @@
 
   import { mapGetters, mapActions } from 'vuex'
   import recordMonthSwitcher from './RecordMonthSwitcher'
-
-  var spendingTypeObj = (name, iconname, dataicon,bgc) => {
-    return {
-      typename: name,
-      iconClassname: iconname,
-      dataicon: dataicon,
-      bgc:bgc
-    }
-  }
-
-  var recordObj = (date, record) => {
-    return {
-      date: date,
-      record: record,
-    }
-  }
-
-  var recordObjDay = (id, item, type, number) => {
-    return {
-      "id": id,
-      "item": item,
-      "type": type,
-      "spendingType": (type == "incoming") ? "in" : "out",
-      "number": number
-    }
-  }
+  import * as fakeData from '../assets/fakeData.js';
+  import * as mutationType from '../store/mutations_type.js'
 
   // https://coolors.co/474747-f17e29-ffffff-58b09c-caf7e2
   export default {
@@ -95,46 +71,7 @@
     },
     data() {
       return {
-        records: [
-          recordObj("2018-04-20", [recordObjDay(0, "McDonald", "Food", 140)]),
-          recordObj("2018-03-27", [recordObjDay(0, "Coffee", "Drink", 96)]),
-          recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "Food", 17)]),
-          recordObj("2018-03-25", [
-            recordObjDay(0, "Breakfast", "Food", 150),
-            recordObjDay(1, "Dinner", "Food", 510),
-            recordObjDay(2, "Coke", "Drink", 60),
-            recordObjDay(3, "Rack", "Digital", 195)
-          ]),
-          recordObj("2018-03-23", [recordObjDay(0, "Lunch", "Food", 169)]),
-          recordObj("2018-03-22", [recordObjDay(0, "Lunch", "Food", 169)]),
-          recordObj("2018-03-20", [recordObjDay(0, "Lunch", "Food", 169)]),
-          recordObj("2018-03-05", [recordObjDay(0, "Salary", "Income", 51000)])
-        ],
-        spendingTypeList: [
-          this.spendingTypeObj("Food", "fas fa-utensils", "utensils",'#ff9b6a'),
-          this.spendingTypeObj("Drink", "fas fa-coffee", "coffee",'#f1b8e4'),
-          this.spendingTypeObj("Digital", "fas fa-mobile-alt", "mobile-alt",'#d9b8f1'),
-          this.spendingTypeObj("Transport", "fas fa-taxi", "taxi",'#f1ccb8'),
-          this.spendingTypeObj("Entertainment", "fas fa-gamepad", "gamepad",'#f1f1b8'),
-          this.spendingTypeObj("Housing", "fas fa-home", "home",'#b8f1ed'),
-          this.spendingTypeObj("Medical", "fas fa-briefcase-medical", "briefcase-medical",'#b8f1cc'),
-          this.spendingTypeObj("Other", "fas fa-globe", "globe",'#e7dac9'),
-          this.spendingTypeObj("Living Cost", "fas fa-clipboard-list", "clipboard-list",'#b7d28d'),
-          this.spendingTypeObj("Income", "fas fa-hand-holding-usd", "hand-holding-usd",'#dcff93'),
-
-        ],
         itemsPerRow: 5,
-        isDataEmpty: false,
-        dateSpliter: '-',
-        strings: {
-          emptyText: "還沒有開始記帳喔！",
-          placeholder_newRecordItemName: "Enter what you buy",
-          placeholder_newRecordItemPrice: "Price",
-          placeholder_newRecordDate: "Select Date",
-          text_newRecoedSubmit: "Add",
-        },
-
-        newRecord: this.getNewRecord(),
       }
     },
     watch: {
@@ -155,9 +92,40 @@
     },
     created() {},
     computed: {
+      //for v-model binding states in vuex
+      newRecordName:{
+        get () {
+          return this.$store.state.newRecord.newRecordName
+        },
+        set (value) {
+          this.$store.commit(mutationType.V_MODEL_NEWRECORD_NAME, value);
+        }
+      },
+      newRecordPrice:{
+        get () {
+          return this.$store.state.newRecord.newRecordPrice
+        },
+        set (value) {
+          this.$store.commit(mutationType.V_MODEL_NEWRECORD_PRICE, value);
+        }
+      },
+      newRecordDate:{
+        get () {
+          return this.$store.state.newRecord.newRecordDate
+        },
+        set (value) {
+          this.$store.commit(mutationType.V_MODEL_NEWRECORD_DATE, value);
+        }
+      },
+
       ...mapGetters([
           'getCurrentDisplayYear',
-          'getCurrentDisplayMonth'
+          'getCurrentDisplayMonth',
+          'records',
+          'spendingTypeList',
+          'isDataEmpty',
+          'strings',
+          'newRecord',
       ]),
 
       currentRecordDate(){
@@ -167,38 +135,22 @@
         }
       },
 
-      getTypeColorArr(){
-        return this.bgc;
-      },
-
-      getSortedRecords(){
-        return this.records.sort((a,b)=>{
-          return new Date(b.date).getTime() - new Date(a.date).getTime();
-        })
-      },
-
       getDisplayRowCount() {
         return Math.ceil(this.spendingTypeList.length / this.itemsPerRow);
+      },
+
+      getNewRecordPlaceholder(){
+        if(this.newRecord.newRecordType == null)
+          return this.strings.placeholder_newRecordItemName;
+        else{
+          return this.newRecord.newRecordType;
+        }
       },
 
       //used for 'watch'
       //dont want to watch every property in object
       getNewRecordType() {
         return this.newRecord.newRecordType;
-      },
-
-      getToday(){
-        return new Date();
-      },
-
-      getYear(){
-        console.log(new Date().getFullYear())
-        return new Date().getFullYear();
-      },
-
-      getMonth(){
-        console.log(new Date().getMonth()+1)
-        return new Date().getMonth()+1;
       },
 
       getRecordsInPeriod(){
@@ -221,86 +173,12 @@
       ...mapActions([
         'actionCurrentDisplayMonthIncrease',
         'actionCurrentDisplayMonthDecrease',
+        'deleteRecord',
+        'newrecordSubmit',
       ]),
-
-
-      getNewRecord(){
-        return {
-          newRecordDate: new Date(),
-          newRecordName: null,
-          newRecordPrice: null,
-          newRecordType: null,
-        }
-      },
-
-      spendingTypeObj(name, iconname, dataicon,bgc){
-        return {
-          typename: name,
-          iconClassname: iconname,
-          dataicon: dataicon,
-          bgc:bgc
-        }
-      },
-
-      newrecordSubmit() {
-        //verify
-        if (this.newRecord.newRecordType == null) {
-          alert("you should select a type first");
-          return;
-        }
-
-        if (this.newRecord.newRecordName == null || this.newRecord.newRecordName.length == 0) {
-          alert("you should enter what you buy");
-          return;
-        }
-
-        if (this.newRecord.newRecordPrice == null || isNaN(parseInt(this.newRecord.newRecordPrice)) || parseInt(this.newRecord
-            .newRecordPrice) < 0) {
-          alert("you should enter a number");
-          return;
-        }
-
-        let date = (this.newRecord.newRecordDate == null) ? new Date() : new Date(this.newRecord.newRecordDate),
-          y = date.getFullYear(),
-          m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1),
-          d = date.getDate() < 10 ? "0" + date.getDate() : date.getDate();
-        this.newRecord.newRecordDate = `${y}-${m}-${d}`;
-        let newRecordDate = this.newRecord.newRecordDate;
-        // console.log(newRecordDate);
-
-        //insert to records
-        let find = this.records.filter((obj) => {
-          return obj.date == newRecordDate;
-        })
-        if (find.length > 0) {
-          // console.log("existed");
-          let id = find[0].record[find[0].record.length - 1].id + 1 ;
-          find[0].record.push(recordObjDay(id, this.newRecord.newRecordName, this.newRecord.newRecordType, Number(this.newRecord.newRecordPrice)));
-        } else {
-          // console.log("not existed");
-          this.records.push(recordObj(this.newRecord.newRecordDate,[recordObjDay(1, this.newRecord.newRecordName, this.newRecord.newRecordType, Number(this.newRecord.newRecordPrice))]));
-        }
-        // console.log(this.records);
-        this.resetNewRecord();
-      },
-
-      resetNewRecord(){
-        for(let key in this.newRecord){
-          if(key == "newRecordDate") continue;
-          this.newRecord[key] = null;
-        }
-      },
 
       getSubArrayBelongToThisItem(index) {
         return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
-      },
-
-      getNewRecordPlaceholder(){
-        if(this.newRecord.newRecordType == null)
-          return this.strings.placeholder_newRecordItemName;
-        else{
-          return this.newRecord.newRecordType;
-        }
       },
 
       getDaySum(dayRecord) {
@@ -321,15 +199,22 @@
         });
         return find[0].iconClassname;
       },
-      // getYear(date) {
-      //   return date.split(this.dateSpliter)[0];
-      // },
+
       getDateMonth(date) {
-        return date.split(this.dateSpliter)[1];
+        let month = new Date(date).getMonth() + 1;
+        return (month<10) ? '0'+month : ''+month;
       },
+
       getDateDay(date) {
-        return date.split(this.dateSpliter)[2];
+        let day = parseInt(new Date(date).getDate());
+        return (day<10) ? '0'+day : ''+day;
       },
+
+      changeCurrentRecordType(typename) {
+        this.$store.commit(mutationType.V_MODEL_NEWRECORD_TYPE, typename);
+      },
+
+      //for mouse event listener
       recordDataEditMouseEnter(e) {
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
         targetEditBlock.classList.remove("hide");
@@ -338,91 +223,35 @@
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
         targetEditBlock.classList.add("hide");
       },
-      changeCurrentRecordType(typename) {
-        this.newRecord.newRecordType = typename;
-      },
-      getCurrentRecordType() {
-        let currentRecordType = this.newRecord.newRecordType;
-        let find = this.spendingTypeList.filter((obj) => {
-          return obj.typename == currentRecordType
-        })
-        console.log(find);
-        return (find.length == 0) ? "fas fa-pencil-alt" : find[0].iconClassname;
-      },
-
-      deleteRecord(date, recordId) {
-        let parentObj = null,
-          parentArray = null,
-          targetObj = null;
-
-        let find = this.records.filter(function (obj) {
-          return obj.date == date;
-        })
-
-        if (find.length != 0) {
-          parentObj = find[0];
-          parentArray = find[0].record;
-
-          let find2 = parentArray.filter(function (obj) {
-            return obj.id == recordId;
-          });
-          targetObj = find2[0];
-        }
-
-
-        //do deleteing job
-        if (parentArray && targetObj) {
-
-          //last one element
-          if (parentArray.length != 1) {
-            parentArray.splice(parentArray.indexOf(targetObj), 1);
-          } else {
-            this.records.splice(this.records.indexOf(parentObj), 1);
-          }
-
-          if (this.records.length == 0)
-            this.isDataEmpty = true;
-        } else {
-          console.log("something wrong, cannot find this record in data");
-          return
-        }
-      },
-      iconEnterAnimation(key){
-        Velocity($(`.iconTag[data-key='${key}']`),{opacity:1},150)
-      },
-
-      iconLeaveAnimation(key){
-        Velocity($(`.iconTag[data-key='${key}']`),{opacity:0},0)
-      },
-
+      
+      //record adding animation
       enterAnimation: function (el, done) {
         var delay = el.dataset.index * 150
         setTimeout(function () {
-          Velocity(
-            el,
-            "transition.slideDownBigIn",
-            { complete: done }
-          )
-        }, delay)
+            $(el).velocity("stop").velocity("transition.slideDownBigIn",{ complete: done })
+            }, delay)
       },
+
+      //record deleting animation
       leaveAnimation: function (el, done) {
         var delay = el.dataset.index * 150
         setTimeout(function () {
-          Velocity(el,{
+            $(el).velocity("stop").velocity({
               opacity: 0,
               height: 0,
               'margin-bottom': 0
-            },{
-              complete: done
-            })
-        }, delay)
+            },{ complete: done })
+            }, delay)
       },
 
+      //whold day record adding animation
       enterWholeAnimation: function (el, done) {
         $(el).velocity("stop").velocity("transition.slideDownIn",{ complete: done });
       },
+
+      //whold day record deleting animation
       leaveWholeAnimation: function (el, done) {
-        $(el).velocity("stop").velocity({opacity:0},{ duration:0,complete: done });
+        $(el).velocity("stop").velocity({height:0,opacity:0},{complete: done });
       },
     }
   }
@@ -476,6 +305,7 @@
   .recordContainer {
     margin-bottom: 3rem;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .recordDateContainer {
