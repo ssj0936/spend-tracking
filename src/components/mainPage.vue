@@ -28,7 +28,7 @@
             button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
         .recordsContainer
           recordMonthSwitcher
-          transition-group(:css="false",@leave="leaveWholeAnimation",@enter="enterWholeAnimation")
+          transition-group(name="wholeMonthRecord")
             div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
               div.recordDateContainer
                 .recordDateTitle 
@@ -244,15 +244,22 @@
             }, delay)
       },
 
-      //whold day record adding animation
-      enterWholeAnimation: function (el, done) {
-        $(el).velocity("stop").velocity("transition.slideDownIn",{ complete: done });
-      },
+      // //whold day record adding animation
+      // enterWholeAnimation: function (el, done) {
+      //   var delay = el.dataset.index * 150;
+      //   setTimeout(function(){
+      //     $(el).velocity("stop").velocity("transition.slideDownIn",{complete: done });
+      //   },delay);
+          
+      // },
 
-      //whold day record deleting animation
-      leaveWholeAnimation: function (el, done) {
-        $(el).velocity("stop").velocity({height:0,opacity:0},{complete: done });
-      },
+      // //whold day record deleting animation
+      // leaveWholeAnimation: function (el, done) {
+      //   var delay = el.dataset.index * 150;
+      //   setTimeout(function(){
+      //     $(el).velocity("stop").velocity("transition.slideDownOut",{complete: done });
+      //   },delay);
+      // },
     }
   }
 
@@ -285,6 +292,29 @@
   $lightGray:#6c757d8a;
   $button-text-color:rgb(50, 73, 99);
 
+  .wholeMonthRecord{
+    &-move {
+      transition: all 600ms ease-in-out 50ms 
+    }
+    &-enter-active {
+      transition: all 300ms ease-out
+    }
+
+    &-leave-active {
+      transition: all 200ms ease-in;
+      position: absolute;
+      z-index: 0;
+    }
+
+    &-enter,
+    &-leave-to {
+      opacity: 0
+    }
+    
+    &-enter {
+      transform: scale(0.9)
+    }
+  }
   .mainPage {
     padding-top: 3rem;
   }
@@ -302,7 +332,13 @@
     border-style: dashed;
   }
 
+  .recordsContainer{
+    position: relative;
+  }
+
   .recordContainer {
+    width: -webkit-fill-available;
+    // position: absolute;
     margin-bottom: 3rem;
     flex-direction: column;
     overflow: hidden;
