@@ -17,6 +17,12 @@ export const state = {
     placeholder_newRecordItemPrice: "Price",
     placeholder_newRecordDate: "Select Date",
     text_newRecoedSubmit: "Add",
+
+    buttonTextAdd:'Add a New Record',
+    buttonTextEdit:'Records Edit',
+    buttonTextDelete:'Records Delete',
+
+    sumThisMonthTitle:"TOTAL",
   },
   newRecord: fakeData.getNewRecord(),
 }

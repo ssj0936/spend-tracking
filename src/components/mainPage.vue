@@ -1,55 +1,70 @@
 <template lang="pug">
 .container
-    div.emptyBlock(v-if="isDataEmpty")
-      h2 {{strings.emptyText}}
-    div.mainPage.row(v-else)
-      .spendingTable.col-md
-        .newRecordContainer
-          .recordInputDatePickerContainter
-            .recordDateIconContainer
-              i.recordInputIcon.fa-lg.fas.fa-calendar-alt
-            datepicker(id="datepicker",v-model="newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
-          .recordInputContainer
-            .recordInputNameContainer
-              .recordTypeIconContainer
-                i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
-              input.newRecordNameInput(v-model="newRecordName",:placeholder="getNewRecordPlaceholder")
-            .recordInputCostContainer
-              i.recordInputIcon.fas.fa-dollar-sign.fa-lg
-              input.newRecordCostInput(v-model="newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
-          .recordTypeContainer
-            .recordTypeRow(v-for="i in getDisplayRowCount")
-              .recordTypeButtonContainer.fa-2x(v-for="(type,key,index) in getSubArrayBelongToThisItem(i)",@click="changeCurrentRecordType(type.typename)")
-                span.fa-layers.fa-fw.iconContainer
-                  i.fas.fa-square.newRecordIconBackGround
-                  i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
-                div.iconTag(:data-key="type.typename") {{type.typename}}
-          .recordSubmitContainer
-            button.newRecordSubmit(@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
-        .recordsContainer
-          recordMonthSwitcher
-          transition-group(name="wholeMonthRecord")
-            div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
-              div.recordDateContainer
-                .recordDateTitle 
-                  .dateMonthDay.dateBlock
-                    .month {{getDateMonth(recordPerDay.date)}}
-                    .day {{getDateDay(recordPerDay.date)}}
-                .recordDateSum {{getDaySum(recordPerDay)}}
-              transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
-                div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
-                  .recordDataInnerContainer
-                    div.recordDataItem.recordDataIcon
-                      i(v-bind:class="getIconClassName(record)")
-                    div.recordDataItem.recordDataName {{record.item}}
-                    div.recordDataItem.recordDataNumber {{record.number}}
-                    div.recordDataItem.recordDataEdit.hide
-                      span
-                        i.recordDataEditIcon.far.fa-edit
-                      span(v-on:click="deleteRecord({date:recordPerDay.date,id:record.id})")
-                        i.recordDataEditIcon.far.fa-trash-alt
-      <!--.spendingChart.col-md-->
-        <!--p CHART-->
+  .functionBtnContainer
+    button.funcBtn.btn.btn-outline-success(data-toggle="modal",data-target="#recordAddingDialog") {{$store.state.strings.buttonTextAdd}}
+    button.funcBtn.btn.btn-outline-success {{$store.state.strings.buttonTextEdit}}
+    button.funcBtn.btn.btn-outline-success {{$store.state.strings.buttonTextDelete}}
+    #recordAddingDialog.modal.fade(role="dialog")
+      .modal-dialog.modal-dialog-centered(role="document")
+        .modal-content
+          .modal-header
+            h5 {{$store.state.strings.buttonTextAdd}}
+            button.close(type="button",data-dismiss="modal")
+              span &times;
+          .modal-body
+            .newRecordContainer
+              .recordInputDatePickerContainter
+                .recordDateIconContainer
+                  i.recordInputIcon.fa-lg.fas.fa-calendar-alt
+                datepicker(id="datepicker",v-model="newRecordDate",format="yyyy-MM-dd",:placeholder="strings.placeholder_newRecordDate")
+              .recordInputContainer
+                .recordInputNameContainer
+                  .recordTypeIconContainer
+                    i.recordTypeIcon.recordInputIcon.fa-lg.fas.fa-pencil-alt
+                  input.newRecordNameInput(v-model="newRecordName",:placeholder="getNewRecordPlaceholder")
+                .recordInputCostContainer
+                  i.recordInputIcon.fas.fa-dollar-sign.fa-lg
+                  input.newRecordCostInput(v-model="newRecordPrice",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
+              .recordTypeContainer
+                .recordTypeRow(v-for="i in getDisplayRowCount")
+                  .recordTypeButtonContainer.fa-2x(v-for="(type,key,index) in getSubArrayBelongToThisItem(i)",@click="changeCurrentRecordType(type.typename)")
+                    span.fa-layers.fa-fw.iconContainer
+                      i.fas.fa-square.newRecordIconBackGround
+                      i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
+                    div.iconTag(:data-key="type.typename") {{type.typename}}
+          .modal-footer
+            button.funcBtn.btn.btn-outline-success(data-dismiss="modal",type="button",@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
+  div.emptyBlock(v-if="isDataEmpty")
+    h2 {{strings.emptyText}}
+  div.mainPage.row(v-else)
+    .spendingTable.col-md
+      .recordsContainer
+        recordMonthSwitcher
+        .totalSumThisMonthContainer
+          .sumThisMonthTitle {{$store.state.strings.sumThisMonthTitle + ":" }}
+          .sumThisMonthNumber(:style="getTotalSumThisMonthColor") {{getTotalSumThisMonth}}
+        transition-group(name="wholeMonthRecord")
+          div.recordContainer(v-for="recordPerDay in getRecordsInPeriod",:key="recordPerDay.date")
+            div.recordDateContainer
+              .recordDateTitle 
+                .dateMonthDay.dateBlock
+                  .month {{getDateMonth(recordPerDay.date)}}
+                  .day {{getDateDay(recordPerDay.date)}}
+              .recordDateSum {{getDaySum(recordPerDay)}}
+            transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
+              div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
+                .recordDataInnerContainer
+                  div.recordDataItem.recordDataIcon
+                    i(v-bind:class="getIconClassName(record)")
+                  div.recordDataItem.recordDataName {{record.item}}
+                  div.recordDataItem.recordDataNumber {{record.number}}
+                  div.recordDataItem.recordDataEdit.hide
+                    span
+                      i.recordDataEditIcon.far.fa-edit
+                    span(v-on:click="deleteRecord({date:recordPerDay.date,id:record.id})")
+                      i.recordDataEditIcon.far.fa-trash-alt
+    .spendingChart.col-md
+      p CHART
 </template>
 <script>
   import Datepicker from 'vuejs-datepicker';
@@ -58,7 +73,10 @@
   import '@fortawesome/fontawesome-free-solid'
   import '@fortawesome/fontawesome-free-regular'
 
-  import { mapGetters, mapActions } from 'vuex'
+  import {
+    mapGetters,
+    mapActions
+  } from 'vuex'
   import recordMonthSwitcher from './RecordMonthSwitcher'
   import * as fakeData from '../assets/fakeData.js';
   import * as mutationType from '../store/mutations_type.js'
@@ -66,12 +84,14 @@
   // https://coolors.co/474747-f17e29-ffffff-58b09c-caf7e2
   export default {
     name: "mainPage",
-    components:{
-        Datepicker,recordMonthSwitcher
+    components: {
+      Datepicker,
+      recordMonthSwitcher
     },
     data() {
       return {
         itemsPerRow: 5,
+        negtiveNumberColor:'#F25429'
       }
     },
     watch: {
@@ -82,7 +102,7 @@
             return obj.typename == this.newRecord.newRecordType;
           })
 
-          if(newIcon.length > 0)
+          if (newIcon.length > 0)
             document.querySelector(".recordTypeIcon").setAttribute("data-icon", newIcon[0].dataicon);
           else
             document.querySelector(".recordTypeIcon").setAttribute("data-icon", "pencil-alt");
@@ -93,45 +113,45 @@
     created() {},
     computed: {
       //for v-model binding states in vuex
-      newRecordName:{
-        get () {
+      newRecordName: {
+        get() {
           return this.$store.state.newRecord.newRecordName
         },
-        set (value) {
+        set(value) {
           this.$store.commit(mutationType.V_MODEL_NEWRECORD_NAME, value);
         }
       },
-      newRecordPrice:{
-        get () {
+      newRecordPrice: {
+        get() {
           return this.$store.state.newRecord.newRecordPrice
         },
-        set (value) {
+        set(value) {
           this.$store.commit(mutationType.V_MODEL_NEWRECORD_PRICE, value);
         }
       },
-      newRecordDate:{
-        get () {
+      newRecordDate: {
+        get() {
           return this.$store.state.newRecord.newRecordDate
         },
-        set (value) {
+        set(value) {
           this.$store.commit(mutationType.V_MODEL_NEWRECORD_DATE, value);
         }
       },
 
       ...mapGetters([
-          'getCurrentDisplayYear',
-          'getCurrentDisplayMonth',
-          'records',
-          'spendingTypeList',
-          'isDataEmpty',
-          'strings',
-          'newRecord',
+        'getCurrentDisplayYear',
+        'getCurrentDisplayMonth',
+        'records',
+        'spendingTypeList',
+        'isDataEmpty',
+        'strings',
+        'newRecord',
       ]),
 
-      currentRecordDate(){
-        return{
-          year:this.getCurrentDisplayYear,
-          month:this.getCurrentDisplayMonth,
+      currentRecordDate() {
+        return {
+          year: this.getCurrentDisplayYear,
+          month: this.getCurrentDisplayMonth,
         }
       },
 
@@ -139,10 +159,10 @@
         return Math.ceil(this.spendingTypeList.length / this.itemsPerRow);
       },
 
-      getNewRecordPlaceholder(){
-        if(this.newRecord.newRecordType == null)
+      getNewRecordPlaceholder() {
+        if (this.newRecord.newRecordType == null)
           return this.strings.placeholder_newRecordItemName;
-        else{
+        else {
           return this.newRecord.newRecordType;
         }
       },
@@ -153,20 +173,42 @@
         return this.newRecord.newRecordType;
       },
 
-      getRecordsInPeriod(){
+      getRecordsInPeriod() {
         let currentY = this.currentRecordDate.year,
-            currentM = this.currentRecordDate.month;
+          currentM = this.currentRecordDate.month;
 
-        let tmp = this.records.filter((obj)=>{
+        let tmp = this.records.filter((obj) => {
           let date = obj.date.split('-'),
-              year = date[0],
-              month = date[1];
+            year = date[0],
+            month = date[1];
           return (currentY == year) && (currentM == month);
-        }).sort((a,b)=>{
+        }).sort((a, b) => {
           return new Date(b.date).getTime() - new Date(a.date).getTime();
         });
 
         return tmp;
+      },
+
+      getTotalSumThisMonth() {
+        let recordsThisMonth = this.getRecordsInPeriod;
+        console.log(recordsThisMonth);
+
+        let sum = 0;
+        for (let dr of recordsThisMonth) {
+          for (let r of dr.record) {
+            if (r.type == "Income")
+              sum += r.number;
+            else
+              sum -= r.number;
+          }
+        }
+        return '' + sum;
+      },
+
+      getTotalSumThisMonthColor() {
+        if (parseInt(this.getTotalSumThisMonth) < 0) {
+          return `color:${this.negtiveNumberColor}`;
+        }
       }
     },
     methods: {
@@ -202,12 +244,12 @@
 
       getDateMonth(date) {
         let month = new Date(date).getMonth() + 1;
-        return (month<10) ? '0'+month : ''+month;
+        return (month < 10) ? '0' + month : '' + month;
       },
 
       getDateDay(date) {
         let day = parseInt(new Date(date).getDate());
-        return (day<10) ? '0'+day : ''+day;
+        return (day < 10) ? '0' + day : '' + day;
       },
 
       changeCurrentRecordType(typename) {
@@ -223,25 +265,29 @@
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
         targetEditBlock.classList.add("hide");
       },
-      
+
       //record adding animation
       enterAnimation: function (el, done) {
         var delay = el.dataset.index * 150
         setTimeout(function () {
-            $(el).velocity("stop").velocity("transition.slideDownBigIn",{ complete: done })
-            }, delay)
+          $(el).velocity("stop").velocity("transition.slideDownBigIn", {
+            complete: done
+          })
+        }, delay)
       },
 
       //record deleting animation
       leaveAnimation: function (el, done) {
         var delay = el.dataset.index * 150
         setTimeout(function () {
-            $(el).velocity("stop").velocity({
-              opacity: 0,
-              height: 0,
-              'margin-bottom': 0
-            },{ complete: done })
-            }, delay)
+          $(el).velocity("stop").velocity({
+            opacity: 0,
+            height: 0,
+            'margin-bottom': 0
+          }, {
+            complete: done
+          })
+        }, delay)
       },
 
       // //whold day record adding animation
@@ -250,7 +296,7 @@
       //   setTimeout(function(){
       //     $(el).velocity("stop").velocity("transition.slideDownIn",{complete: done });
       //   },delay);
-          
+
       // },
 
       // //whold day record deleting animation
@@ -265,24 +311,23 @@
 
 </script>
 <style lang="scss">
-  input#datepicker{
-    opacity: .4;
+  input#datepicker {
+    // opacity: .4;
     font-size: large;
-    height: 2rem;
-    // width: 80px;
+    height: 2rem; // width: 80px;
     border: 0px;
     background: transparent;
-    outline: none !important;
-
-      // padding: .75em .5em;
-      // font-size: 100%;
-      // border: 1px solid #ccc;
-      // width: 100%
+    outline: none !important; // padding: .75em .5em;
+    // font-size: 100%;
+    // border: 1px solid #ccc;
+    // width: 100%
   }
+
 </style>
 
 <style lang="scss" scoped>
   @import "~bootstrap/scss/bootstrap-grid.scss";
+  $topNavColor:#58B09C;
   $recordContainerPadding: 1rem;
   $app-color:#CAF7E2;
   $light-icon-color:#6c757d;
@@ -292,9 +337,38 @@
   $lightGray:#6c757d8a;
   $button-text-color:rgb(50, 73, 99);
 
-  .wholeMonthRecord{
+  #recordAddingDialog {
+    h5 {
+      margin-bottom: 0;
+    }
+
+    .modal-body {
+      padding-bottom: 0;
+    }
+  }
+
+  .functionBtnContainer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 1rem 0 0 0;
+
+
+    .funcBtn.btn.btn-outline-success {
+      margin: 0 5px;
+      border-color: $topNavColor;
+      color: $topNavColor;
+
+      &:hover {
+        background: $topNavColor;
+        color: white;
+      }
+    }
+  }
+
+  .wholeMonthRecord {
     &-move {
-      transition: all 600ms ease-in-out 50ms 
+      transition: all 600ms ease-in-out 50ms
     }
     &-enter-active {
       transition: all 300ms ease-out
@@ -310,11 +384,12 @@
     &-leave-to {
       opacity: 0
     }
-    
+
     &-enter {
       transform: scale(0.9)
     }
   }
+
   .mainPage {
     padding-top: 3rem;
   }
@@ -332,13 +407,22 @@
     border-style: dashed;
   }
 
-  .recordsContainer{
+  .recordsContainer {
     position: relative;
+    // color:$topNavColor;
+
+    .totalSumThisMonthContainer {
+      margin: 1rem 0 4rem 0;
+      font-size: xx-large;
+      display: flex;
+      justify-content: space-between;
+      font-weight: 900;
+      border-bottom: 1px solid;
+    }
   }
 
   .recordContainer {
-    width: -webkit-fill-available;
-    // position: absolute;
+    width: -webkit-fill-available; // position: absolute;
     margin-bottom: 3rem;
     flex-direction: column;
     overflow: hidden;
@@ -459,11 +543,11 @@
     align-items: center;
     position: relative;
 
-    &:hover{
+    &:hover {
       cursor: pointer;
-      color:$vividColor;
+      color: $vividColor;
 
-      .iconContainer{
+      .iconContainer {
         .newRecordIconBackGround {
           color: $vividColor;
           opacity: .7;
@@ -474,7 +558,7 @@
       }
     }
 
-    .iconTag{
+    .iconTag {
       font-size: medium;
       font-weight: 300;
       width: max-content;
@@ -482,9 +566,9 @@
   }
 
   .newRecordContainer {
-    padding: 1rem;
-    background: $app-color;
-    margin-bottom: 3rem;
+    // padding: 1rem;
+    // background: $app-color;
+    // margin-bottom: 3rem;
   }
 
   .iconContainer {
@@ -502,8 +586,7 @@
   .recordTypeRow {
     display: inline-flex;
     flex-direction: column;
-    flex:1;
-    // justify-content: center;
+    flex: 1; // justify-content: center;
     align-items: flex-start;
     max-width: 200px;
   }
@@ -546,7 +629,7 @@
     }
   }
 
-  .recordInputDatePickerContainter{
+  .recordInputDatePickerContainter {
     display: flex;
     align-items: center;
     flex: 1;
@@ -554,7 +637,7 @@
 
     .recordDateIconContainer {
       text-align: center;
-      width:35px;
+      width: 35px;
     }
 
     .recordInputIcon {
@@ -579,7 +662,7 @@
 
       .recordTypeIconContainer {
         text-align: center;
-        width:35px;
+        width: 35px;
       }
     }
 
@@ -606,4 +689,5 @@
       margin-right: 8px;
     }
   }
+
 </style>
