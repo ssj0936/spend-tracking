@@ -24,6 +24,7 @@
     "pug-loader": "^2.3.0",
     "sass": "^1.0.0",
     "sass-loader": "^6.0.7",
+    "toastr": "^2.1.4",
     "velocity-animate": "^1.5.1",
     "vue": "^2.5.2",
     "vuejs-datepicker": "^0.9.29",

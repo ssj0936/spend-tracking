@@ -30,6 +30,10 @@ module.exports = {
       '@': resolve('src'),
     }
   },
+  // externals: {
+  //   'jQuery': "jquery",
+  //   'jquery': "jquery"
+  // },
   module: {
     rules: [
       {
@@ -82,8 +86,8 @@ module.exports = {
   },
   plugins: [
     new webpack.ProvidePlugin({
-        '$': "jquery",
-        'jQuery': "jquery",
+        $: "jquery",
+        jQuery: "jquery",
         'Popper': 'popper.js'
     })
   ],

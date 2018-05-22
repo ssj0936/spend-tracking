@@ -33,7 +33,7 @@
                       i(:class="type.iconClassname+' fa-inverse newRecordIcon'",data-fa-transform="shrink-6")
                     div.iconTag(:data-key="type.typename") {{type.typename}}
           .modal-footer
-            button.funcBtn.btn.btn-outline-success(data-dismiss="modal",type="button",@click="newrecordSubmit") {{strings.text_newRecoedSubmit}}
+            button.funcBtn.btn.btn-outline-success(type="button",@click="submit(currentModalMode)") {{strings.text_newRecoedSubmit}}
   div.emptyBlock(v-if="isDataEmpty")
     h2 {{strings.emptyText}}
   div.mainPage.row(v-else)
@@ -52,27 +52,54 @@
                   .day {{getDateDay(recordPerDay.date)}}
               .recordDateSum {{getDaySum(recordPerDay)}}
             transition-group(:css="false",@leave="leaveAnimation",@enter="enterAnimation")
-              div.recordDataContainer(:id="recordPerDay.date +'-'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'-'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
+              div.recordDataContainer(:class="{'isEditing':(recordPerDay.date +'@'+record.id) == currentEditRecordId}",:id="recordPerDay.date +'@'+record.id",v-for="record in recordPerDay.record",:key="recordPerDay.date +'@'+record.id",@mouseenter="recordDataEditMouseEnter",@mouseleave="recordDataEditMouseLeave")
                 .recordDataInnerContainer
-                  div.recordDataItem.recordDataIcon
-                    i(v-bind:class="getIconClassName(record)")
-                  div.recordDataItem.recordDataName {{record.item}}
-                  div.recordDataItem.recordDataNumber {{record.number}}
-                  div.recordDataItem.recordDataEdit.hide
-                    span
-                      i.recordDataEditIcon.far.fa-edit
-                    span(v-on:click="deleteRecord({date:recordPerDay.date,id:record.id})")
-                      i.recordDataEditIcon.far.fa-trash-alt
+                  div.recordEdit(:class="{'d-none':(recordPerDay.date +'@'+record.id) != currentEditRecordId}")
+                    div.recordDataEditItem.recordDataEditName.recordDataBlockEdit
+                      div.recordDataItem.recordDataIcon
+                        i(v-bind:class="getIconClassName(record)")
+                      input(v-model="currentEdit.currentEditRecordName",:placeholder="getNewRecordPlaceholder")
+                    div.recordDataEditItem.recordDataEditNumber.recordDataBlockEdit
+                      div.recordDataItem.recordDataIcon
+                        i.fas.fa-dollar-sign.fa-lg
+                      input(v-model="currentEdit.currentEditRecordCost",type="number",onkeydown="javascript: return event.keyCode == 69 ? false : true" ,:placeholder="strings.placeholder_newRecordItemPrice")
+                    div.recordDataEditItem.recordDataEditSubmit
+                      span(v-on:click="()=>{currentEditRecordId=null}")
+                        i.recordDataEditIcon.far.fa-times-circle
+                      span(v-on:click="editSubmit()")
+                        i.recordDataEditIcon.far.fa-check-circle
+                  div.recordDisplay(:class="{'d-none':(recordPerDay.date +'@'+record.id) == currentEditRecordId}")
+                    div.recordDataItem.recordDataIcon
+                      i(v-bind:class="getIconClassName(record)")
+                    div.recordDataItem.recordDataName 
+                      div.recordDataBlockDisplay {{record.item}}
+                    div.recordDataItem.recordDataNumber 
+                      div.recordDataBlockDisplay {{record.number}}
+                    div.recordDataItem.recordDataEdit.hide
+                      span(v-on:click="initEditBlock(recordPerDay.date,record)")
+                        i.recordDataEditIcon.far.fa-edit
+                      span(v-on:click="deleteRecord({date:recordPerDay.date,id:record.id})")
+                        i.recordDataEditIcon.far.fa-trash-alt
+                  
+
     .spendingChart.col-md
       p CHART
 </template>
 <script>
+  // toastr
+  import * as toastr from 'toastr';
+  import 'toastr/build/toastr.css';
+  toastr.options.positionClass = "toast-bottom-center";
+
+  //datepicker
   import Datepicker from 'vuejs-datepicker';
 
+  //font-awesome
   import fontawesome from '@fortawesome/fontawesome'
   import '@fortawesome/fontawesome-free-solid'
   import '@fortawesome/fontawesome-free-regular'
 
+  //vuex
   import {
     mapGetters,
     mapActions
@@ -91,7 +118,21 @@
     data() {
       return {
         itemsPerRow: 5,
-        negtiveNumberColor:'#F25429'
+        negtiveNumberColor:'#F25429',
+        modalMode:{
+          MODAL_MODE_ADD:'MODAL_MODE_ADD',
+          MODAL_MODE_EDIT:'MODAL_MODE_EDIT',
+        },
+        currentModalMode:null,
+
+        currentEdit:{
+          currentEditRecordDate:'',
+          currentEditRecordId:0,
+          currentEditRecordType:'',
+          currentEditRecordName:'',
+          currentEditRecordCost:0
+        },
+        currentEditRecordId:null,
       }
     },
     watch: {
@@ -141,8 +182,8 @@
       ...mapGetters([
         'getCurrentDisplayYear',
         'getCurrentDisplayMonth',
-        'records',
         'spendingTypeList',
+        'records',
         'isDataEmpty',
         'strings',
         'newRecord',
@@ -191,7 +232,7 @@
 
       getTotalSumThisMonth() {
         let recordsThisMonth = this.getRecordsInPeriod;
-        console.log(recordsThisMonth);
+        // console.log(recordsThisMonth);
 
         let sum = 0;
         for (let dr of recordsThisMonth) {
@@ -217,7 +258,55 @@
         'actionCurrentDisplayMonthDecrease',
         'deleteRecord',
         'newrecordSubmit',
+        'editRecord',
       ]),
+
+      recordModalShow(){
+        $("#recordAddingDialog").modal('show');
+      },
+
+      recordModalHide(){
+        $("#recordAddingDialog").modal('hide');
+      },
+
+      initEditBlock(date,record){
+        this.currentEditRecordId = date +'@'+record.id;
+        // console.log(record);
+        this.currentEdit.currentEditRecordDate = date;
+        this.currentEdit.currentEditRecordId = record.id;
+        this.currentEdit.currentEditRecordName = record.item;
+        this.currentEdit.currentEditRecordType = record.type;
+        this.currentEdit.currentEditRecordCost = Number(record.number);
+        // console.log(this.currentEdit);
+      },
+
+      editSubmit(){
+        let editSuccess = this.editRecord(this.currentEdit);
+        this.currentEditRecordId = null;
+        // toastr['success']('success');
+      },
+
+      submit(){
+        //verify
+        if (this.$store.state.newRecord.newRecordType == null) {
+          alert("you should select a type first");
+          return;
+        }
+
+        if (this.$store.state.newRecord.newRecordName == null || this.$store.state.newRecord.newRecordName.length == 0) {
+          alert("you should enter what you buy");
+          return;
+        }
+
+        if (this.$store.state.newRecord.newRecordPrice == null || isNaN(parseInt(this.$store.state.newRecord.newRecordPrice)) || parseInt(this.$store.state.newRecord
+            .newRecordPrice) < 0) {
+          alert("you should enter a number");
+          return;
+        }
+        this.currentModalMode = this.modalMode.MODAL_MODE_ADD;
+        this.newrecordSubmit();
+        this.recordModalHide();
+      },
 
       getSubArrayBelongToThisItem(index) {
         return this.spendingTypeList.slice((index - 1) * this.itemsPerRow, index * this.itemsPerRow)
@@ -259,11 +348,13 @@
       //for mouse event listener
       recordDataEditMouseEnter(e) {
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
-        targetEditBlock.classList.remove("hide");
+        if(targetEditBlock)
+          targetEditBlock.classList.remove("hide");
       },
       recordDataEditMouseLeave(e) {
         let targetEditBlock = e.target.querySelector('.recordDataEdit');
-        targetEditBlock.classList.add("hide");
+        if(targetEditBlock)
+          targetEditBlock.classList.add("hide");
       },
 
       //record adding animation
@@ -289,23 +380,6 @@
           })
         }, delay)
       },
-
-      // //whold day record adding animation
-      // enterWholeAnimation: function (el, done) {
-      //   var delay = el.dataset.index * 150;
-      //   setTimeout(function(){
-      //     $(el).velocity("stop").velocity("transition.slideDownIn",{complete: done });
-      //   },delay);
-
-      // },
-
-      // //whold day record deleting animation
-      // leaveWholeAnimation: function (el, done) {
-      //   var delay = el.dataset.index * 150;
-      //   setTimeout(function(){
-      //     $(el).velocity("stop").velocity("transition.slideDownOut",{complete: done });
-      //   },delay);
-      // },
     }
   }
 
@@ -323,6 +397,10 @@
     // width: 100%
   }
 
+  #toast-container.toast-bottom-center{
+    bottom:1rem;
+  }
+
 </style>
 
 <style lang="scss" scoped>
@@ -330,6 +408,7 @@
   $topNavColor:#58B09C;
   $recordContainerPadding: 1rem;
   $app-color:#CAF7E2;
+  $edit-color:#b6decb;
   $light-icon-color:#6c757d;
   $text-color:#1F2D3D;
   $recordTypeContainerBGC:#EEE;
@@ -488,16 +567,29 @@
   }
 
   .recordDataInnerContainer {
-    display: flex;
-    background: $app-color;
-    color: $text-color;
-    flex-direction: row;
-    padding: 1rem;
-    align-items: center;
-    height: -webkit-fill-available;
+    .recordDisplay{
+      display: flex;
+      background: $app-color;
+      color: $text-color;
+      flex-direction: row;
+      padding: 1rem;
+      align-items: center;
+      height: -webkit-fill-available;
+    }
+
+    .recordEdit{
+      display: flex;
+      background: $edit-color;
+      color: $text-color;
+      flex-direction: row;
+      padding: 1rem;
+      align-items: center;
+      height: -webkit-fill-available;
+    }
   }
 
   .recordDataItem.recordDataIcon {
+    width:30px;
     flex: 0 30px;
     text-align: center;
   }
@@ -531,7 +623,9 @@
   }
 
   .fa-edit,
-  .fa-trash-alt {
+  .fa-trash-alt,
+  .fa-times-circle,
+  .fa-check-circle{
     color: $light-icon-color;
   }
 
@@ -689,5 +783,60 @@
       margin-right: 8px;
     }
   }
+
+  .recordEdit{
+    input {
+        font-size: 16px;
+        height: 2rem;
+        border: 0px;
+        background: transparent;
+        border-bottom: 1px solid #00000025;
+
+        &:focus {
+          outline: none !important;
+        }
+    }
+
+    .recordInputIcon {
+      margin-right: 8px;
+    }
+
+    .recordDataEditName{
+      display: flex;
+      align-items: center;
+
+      .recordDataEditIcon {
+        flex:0
+      }
+
+      input{
+        margin-left: 1rem;
+        flex:1
+      }
+    }
+
+    .recordDataEditNumber{
+      margin-left:1rem;
+      display: flex;
+      align-items: center;
+
+      .recordDataEditIcon {
+        flex:0
+      }
+
+      input{
+        width: 80px;
+        flex:1
+      }
+    }
+
+    .recordDataEditSubmit{
+      position: absolute;
+      width:3.5rem;
+      right:1rem
+    }
+  }
+
+ 
 
 </style>

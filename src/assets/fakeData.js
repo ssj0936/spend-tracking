@@ -35,6 +35,16 @@ export const spendingTypeObj = (name, iconname, dataicon, bgc) => {
 
 
 export const records = [
+  recordObj("2018-05-27", [recordObjDay(0, "Coffee", "Drink", 96)]),
+  recordObj("2018-05-26", [recordObjDay(0, "Breakfast", "Food", 17)]),
+  recordObj("2018-05-25", [
+    recordObjDay(0, "Breakfast", "Food", 150),
+    recordObjDay(1, "Dinner", "Food", 510),
+    recordObjDay(2, "Coke", "Drink", 60),
+    recordObjDay(3, "Rack", "Digital", 195)
+  ]),
+  recordObj("2018-05-23", [recordObjDay(0, "Lunch", "Food", 169)]),
+  recordObj("2018-05-22", [recordObjDay(0, "Lunch", "Food", 169)]),
   recordObj("2018-04-20", [recordObjDay(0, "McDonald", "Food", 140)]),
   recordObj("2018-03-27", [recordObjDay(0, "Coffee", "Drink", 96)]),
   recordObj("2018-03-26", [recordObjDay(0, "Breakfast", "Food", 17)]),

@@ -67,23 +67,6 @@ export const mutations = {
   },
 
   [types.NEW_RECORD_SUBMIT](state) {
-    //verify
-    if (state.newRecord.newRecordType == null) {
-      alert("you should select a type first");
-      return;
-    }
-
-    if (state.newRecord.newRecordName == null || state.newRecord.newRecordName.length == 0) {
-      alert("you should enter what you buy");
-      return;
-    }
-
-    if (state.newRecord.newRecordPrice == null || isNaN(parseInt(state.newRecord.newRecordPrice)) || parseInt(state.newRecord
-        .newRecordPrice) < 0) {
-      alert("you should enter a number");
-      return;
-    }
-
     let date = (state.newRecord.newRecordDate == null) ? new Date() : new Date(state.newRecord.newRecordDate),
       y = date.getFullYear(),
       m = (date.getMonth() + 1) < 10 ? "0" + (date.getMonth() + 1) : (date.getMonth() + 1),
@@ -110,6 +93,44 @@ export const mutations = {
     for (let key in state.newRecord) {
       if (key == "newRecordDate") continue;
       state.newRecord[key] = null;
+    }
+  },
+
+  [types.EDIT_RECORD](state,para) {
+    // console.log("para");
+
+    let date = para.currentEditRecordDate,
+      recordId = para.currentEditRecordId;
+
+    let parentObj = null,
+      parentArray = null,
+      targetObj = null;
+
+    let find = state.records.filter(function (obj) {
+      return obj.date == date;
+    })
+
+    if (find.length != 0) {
+      parentObj = find[0];
+      parentArray = find[0].record;
+
+      let find2 = parentArray.filter(function (obj) {
+        return obj.id == recordId;
+      });
+      targetObj = find2[0];
+    }
+
+    //do deleteing job
+    if (parentArray && targetObj) {
+      // console.log(targetObj);
+      targetObj.item = para.currentEditRecordName;
+      targetObj.number = para.currentEditRecordCost;
+      targetObj.type = para.currentEditRecordType;
+      targetObj.spendingType = (targetObj.type == "Income") ? "in" : "out";
+      return true;
+    } else {
+      console.log("something wrong, cannot find this record in data");
+      return false;
     }
   },
 

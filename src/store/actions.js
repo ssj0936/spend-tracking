@@ -17,8 +17,14 @@ export const newrecordSubmit = ({ commit }) => {
   commit(types.NEW_RECORD_SUBMIT);
 }
 
+export const editRecord = ({ commit },para) => {
+  // console.log('editRecord');
+  // console.log(para);
+  commit(types.EDIT_RECORD,para);
+}
+
 export const deleteRecord = ({ commit },para) => {
-  console.log('deleteRecord');
-  console.log(para);
+  // console.log('deleteRecord');
+  // console.log(para);
   commit(types.DELETE_RECORD,para);
 }
